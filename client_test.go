@@ -1,0 +1,77 @@
+package gemini
+
+import (
+	"fmt"
+	"io/ioutil"
+	"os"
+	"strings"
+	"testing"
+
+	"github.com/google/go-cmp/cmp"
+)
+
+func compareResponses(expected, given Response) (diff string) {
+	diff = cmp.Diff(expected.Meta, given.Meta)
+	if diff != "" {
+		return
+	}
+
+	diff = cmp.Diff(expected.Meta, given.Meta)
+	if diff != "" {
+		return
+	}
+
+	expectedBody, err := ioutil.ReadAll(expected.Body)
+	if err != nil {
+		return fmt.Sprintf("failed to get expected body: %v", err)
+	}
+
+	givenBody, err := ioutil.ReadAll(given.Body)
+	if err != nil {
+		return fmt.Sprintf("failed to get givenponse body: %v", err)
+	}
+
+	diff = cmp.Diff(expectedBody, givenBody)
+	return
+}
+
+func TestGetResponse(t *testing.T) {
+	tests := []struct {
+		file     string
+		expected Response
+	}{
+		{"resources/tests/simple_response", Response{20, "text/gemini", ioutil.NopCloser(strings.NewReader("This is the content of the page\r\n"))}},
+	}
+
+	for _, tc := range tests {
+		f, err := os.Open(tc.file)
+		if err != nil {
+			t.Fatalf("failed to get test case file %s: %v", tc.file, err)
+		}
+
+		res, err := getResponse(f)
+		if err != nil {
+			t.Fatalf("failed to parse response %s: %v", tc.file, err)
+		}
+
+		diff := compareResponses(tc.expected, res)
+		if diff != "" {
+			t.Fatalf(diff)
+		}
+	}
+
+}
+
+func TestGetResponseEmptyResponse(t *testing.T) {
+	_, err := getResponse(ioutil.NopCloser(strings.NewReader("")))
+	if err == nil {
+		t.Fatalf("expected to get an error for empty response, got nil instead")
+	}
+}
+
+func TestGetResponseInvalidStatus(t *testing.T) {
+	_, err := getResponse(ioutil.NopCloser(strings.NewReader("AA\tmeta\r\n")))
+	if err == nil {
+		t.Fatalf("expected to get an error for invalid status response, got nil instead")
+	}
+}
