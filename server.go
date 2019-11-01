@@ -81,7 +81,10 @@ func handleConnection(conn io.ReadWriteCloser, handler Handler) {
 
 	request := Request{requestURL}
 	response := handler.Handle(request)
-	defer response.Body.Close()
+
+	if response.Body != nil {
+		defer response.Body.Close()
+	}
 
 	err = writeResponse(conn, response)
 	if err != nil {
@@ -107,6 +110,10 @@ func writeResponse(conn io.Writer, response Response) error {
 	_, err := fmt.Fprintf(conn, "%d %s\r\n", response.Status, response.Meta)
 	if err != nil {
 		return fmt.Errorf("failed to write header line to the client: %v", err)
+	}
+
+	if response.Body == nil {
+		return nil
 	}
 
 	_, err = io.Copy(conn, response.Body)
