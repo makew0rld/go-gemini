@@ -1,0 +1,26 @@
+image: fedora/latest
+packages:
+  - go
+sources:
+  - https://git.sr.ht/~yotam/go-gemini
+  - https://git.sr.ht/~sircmpwn/annotatego
+secrets:
+  - f43da1db-697d-4101-8607-e96f574b035a
+tasks:
+- lint: |
+   cd go-gemini
+   go vet
+- test: |
+   cd go-gemini
+   go test
+- build: |
+   cd go-gemini
+   make
+- annotatego: |
+   cd annotatego
+   go build
+   sudo cp annotatego /usr/bin/
+- annotate: |
+   cd go-gemini
+   annotatego -v git.sr.ht/~yotam/go-gemini... >annotations.json
+   ~/upload-annotations annotations.json yotam go-gemini
