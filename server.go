@@ -123,3 +123,19 @@ func writeResponse(conn io.Writer, response Response) error {
 
 	return nil
 }
+
+// ErrorResponse create a response from the given error with the error string as the Meta field.
+// If the error is of type gemini.Error, the status will be taken from the status field,
+// otherwise it will default to StatusTemporaryFailure.
+// If the error is nil, the function will panic.
+func ErrorResponse(err error) Response {
+	if err == nil {
+		panic("nil error is not a valid parameter")
+	}
+
+	if ge, ok := err.(Error); ok {
+		return Response{Status: ge.Status, Meta: ge.Error(), Body: nil}
+	}
+
+	return Response{Status: StatusTemporaryFailure, Meta: err.Error(), Body: nil}
+}
