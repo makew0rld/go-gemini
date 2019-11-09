@@ -1,5 +1,7 @@
 package gemini
 
+import "fmt"
+
 // Gemini status codes as defined in the Gemini spec Appendix 1.
 const (
 	StatusInput = 10
@@ -34,4 +36,17 @@ const (
 // SimplifyStatus simplify the response status by omiting the detailed second digit of the status code.
 func SimplifyStatus(status int) int {
 	return (status / 10) * 10
+}
+
+type Error struct {
+	Err    error
+	Status int
+}
+
+func (e Error) Error() string {
+	return fmt.Sprintf("Status %d: %v", e.Status, e.Err)
+}
+
+func (e Error) Unwrap() error {
+	return e.Err
 }
