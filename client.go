@@ -22,9 +22,15 @@ type header struct {
 	meta   string
 }
 
+type Client struct {
+	InsecureSkipVerify bool
+}
+
+var DefaultClient = &Client{}
+
 // Fetch a resource from a Gemini server with the given URL
-func Fetch(url string) (res Response, err error) {
-	conn, err := connectByURL(url)
+func (c Client) Fetch(url string) (res Response, err error) {
+	conn, err := c.connect(url)
 	if err != nil {
 		return Response{}, fmt.Errorf("failed to connect to the server: %v", err)
 	}
@@ -38,17 +44,22 @@ func Fetch(url string) (res Response, err error) {
 	return getResponse(conn)
 }
 
-func connectByURL(rawURL string) (io.ReadWriteCloser, error) {
+func (c Client) connect(rawURL string) (io.ReadWriteCloser, error) {
 	parsedURL, err := url.Parse(rawURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse given URL: %v", err)
 	}
 
 	conf := &tls.Config{
-		InsecureSkipVerify: true,
+		InsecureSkipVerify: c.InsecureSkipVerify,
 	}
 
 	return tls.Dial("tcp", parsedURL.Host, conf)
+}
+
+// Fetch a resource from a Gemini server with the default client
+func Fetch(url string) (res Response, err error) {
+	return DefaultClient.Fetch(url)
 }
 
 func sendRequest(conn io.Writer, requestURL string) error {
