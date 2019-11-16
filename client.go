@@ -51,6 +51,7 @@ func (c Client) connect(rawURL string) (io.ReadWriteCloser, error) {
 	}
 
 	conf := &tls.Config{
+		MinVersion:         tls.VersionTLS12,
 		InsecureSkipVerify: c.InsecureSkipVerify,
 	}
 
