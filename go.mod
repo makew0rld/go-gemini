@@ -1,5 +1,5 @@
-module git.sr.ht/~yotam/go-gemini
+module github.com/makeworld-the-better-one/go-gemini
 
-go 1.12
+go 1.14
 
 require github.com/google/go-cmp v0.3.1

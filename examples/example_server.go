@@ -6,7 +6,7 @@ import (
 	"net/url"
 	"strings"
 
-	gemini "git.sr.ht/~yotam/go-gemini"
+	gemini "github.com/makeworld-the-better-one/go-gemini"
 )
 
 type ExampleHandler struct {
