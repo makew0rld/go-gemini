@@ -33,9 +33,31 @@ const (
 	StatusExpiredCertificateRejected    = 65
 )
 
+// All the statuses between 10 and 65 that are invalid
+var invalidStatuses = []int{
+	11, 12, 13, 14, 15, 16, 17, 18, 19,
+	22, 23, 24, 25, 26, 27, 28, 29,
+	32, 33, 34, 35, 36, 37, 38, 39,
+	45, 46, 47, 48, 49,
+	54, 55, 56, 57, 58,
+}
+
 // SimplifyStatus simplify the response status by omiting the detailed second digit of the status code.
 func SimplifyStatus(status int) int {
 	return (status / 10) * 10
+}
+
+// IsStatusValid checks whether an int status is covered by the spec.
+func IsStatusValid(status int) bool {
+	if status < 10 || status > 65 {
+		return false
+	}
+	for _, v := range invalidStatuses {
+		if status == v {
+			return false
+		}
+	}
+	return true
 }
 
 type Error struct {

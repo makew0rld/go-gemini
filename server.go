@@ -6,17 +6,18 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"net/url"
 	"strings"
 )
 
 // Request contains the data of the client request
 type Request struct {
-	URL string
+	URL *url.URL
 }
 
 // Handler is the interface a struct need to implement to be able to handle Gemini requests
 type Handler interface {
-	Handle(r Request) Response
+	Handle(r Request) *Response
 }
 
 // ListenAndServe create a TCP server on the specified address and pass
@@ -76,6 +77,8 @@ func handleConnection(conn io.ReadWriteCloser, handler Handler) {
 
 	requestURL, err := getRequestURL(conn)
 	if err != nil {
+		// Return BadRequest (59) if there was URL parsing error
+		writeResponse(conn, &Response{Status: StatusBadRequest, Meta: "Bad URL: " + err.Error()})
 		return
 	}
 
@@ -92,21 +95,26 @@ func handleConnection(conn io.ReadWriteCloser, handler Handler) {
 	}
 }
 
-func getRequestURL(conn io.Reader) (string, error) {
+func getRequestURL(conn io.Reader) (*url.URL, error) {
 	scanner := bufio.NewScanner(conn)
 	if ok := scanner.Scan(); !ok {
-		return "", scanner.Err()
+		return nil, scanner.Err()
 	}
 
-	rawURL := scanner.Text()
-	if strings.Contains(rawURL, "://") {
-		return rawURL, nil
+	rawURL := strings.TrimSuffix(scanner.Text(), "\r\n")
+	parsedURL, err := url.Parse(rawURL)
+	if err != nil {
+		return nil, fmt.Errorf("couldn't parse request URL")
+	}
+	if parsedURL.Scheme == "" {
+		// Default scheme is gemini
+		parsedURL.Scheme = "gemini"
 	}
 
-	return fmt.Sprintf("gemini://%s", rawURL), nil
+	return parsedURL, nil
 }
 
-func writeResponse(conn io.Writer, response Response) error {
+func writeResponse(conn io.Writer, response *Response) error {
 	_, err := fmt.Fprintf(conn, "%d %s\r\n", response.Status, response.Meta)
 	if err != nil {
 		return fmt.Errorf("failed to write header line to the client: %v", err)
@@ -128,14 +136,14 @@ func writeResponse(conn io.Writer, response Response) error {
 // If the error is of type gemini.Error, the status will be taken from the status field,
 // otherwise it will default to StatusTemporaryFailure.
 // If the error is nil, the function will panic.
-func ErrorResponse(err error) Response {
+func ErrorResponse(err error) *Response {
 	if err == nil {
 		panic("nil error is not a valid parameter")
 	}
 
 	if ge, ok := err.(Error); ok {
-		return Response{Status: ge.Status, Meta: ge.Error(), Body: nil}
+		return &Response{Status: ge.Status, Meta: ge.Error(), Body: nil}
 	}
 
-	return Response{Status: StatusTemporaryFailure, Meta: err.Error(), Body: nil}
+	return &Response{Status: StatusTemporaryFailure, Meta: err.Error(), Body: nil}
 }

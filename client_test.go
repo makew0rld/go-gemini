@@ -10,7 +10,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 )
 
-func compareResponses(expected, given Response) (diff string) {
+func compareResponses(expected, given *Response) (diff string) {
 	diff = cmp.Diff(expected.Meta, given.Meta)
 	if diff != "" {
 		return
@@ -54,7 +54,7 @@ func TestGetResponse(t *testing.T) {
 			t.Fatalf("failed to parse response %s: %v", tc.file, err)
 		}
 
-		diff := compareResponses(tc.expected, res)
+		diff := compareResponses(&tc.expected, res)
 		if diff != "" {
 			t.Fatalf(diff)
 		}
@@ -73,5 +73,13 @@ func TestGetResponseInvalidStatus(t *testing.T) {
 	_, err := getResponse(ioutil.NopCloser(strings.NewReader("AA\tmeta\r\n")))
 	if err == nil {
 		t.Fatalf("expected to get an error for invalid status response, got nil instead")
+	}
+}
+
+func TestGetHeaderLongMeta(t *testing.T) {
+	// Meta longer than 1024 chars
+	_, err := getHeader(strings.NewReader("20\tbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\r\n"))
+	if err == nil {
+		t.Fatalf("expected to get an error for meta longer than 1024")
 	}
 }

@@ -3,7 +3,6 @@ package main
 import (
 	"io/ioutil"
 	"log"
-	"net/url"
 	"strings"
 
 	gemini "github.com/makeworld-the-better-one/go-gemini"
@@ -12,26 +11,20 @@ import (
 type ExampleHandler struct {
 }
 
-func (h ExampleHandler) Handle(r gemini.Request) gemini.Response {
-	u, err := url.Parse(r.URL)
-	if err != nil {
-		body := ioutil.NopCloser(strings.NewReader(err.Error()))
-		return gemini.Response{40, "text/gemini", body}
-	}
-
-	if u.Path != "/" {
+func (h ExampleHandler) Handle(r gemini.Request) *gemini.Response {
+	if r.URL.Path != "/" {
 		body := ioutil.NopCloser(strings.NewReader("Not Found"))
-		return gemini.Response{50, "text/gemini", body}
+		return &gemini.Response{50, "text/gemini", body}
 	}
 
 	body := ioutil.NopCloser(strings.NewReader("Hello World"))
-	return gemini.Response{20, "text/gemini", body}
+	return &gemini.Response{20, "text/gemini", body}
 }
 
 func main() {
 	handler := ExampleHandler{}
 
-	err := gemini.ListenAndServe(":1965", "server.crt", "server.key", handler)
+	err := gemini.ListenAndServe("", "server.crt", "server.key", handler)
 	if err != nil {
 		log.Fatal(err)
 	}
