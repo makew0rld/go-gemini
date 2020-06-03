@@ -9,8 +9,11 @@ At the moment, this library focuses more on the client side of things, and suppo
 ## Improvements
 This fork of the library improves on the original in several ways, some listed above already.
 
-- Client supports self-signed certs sent by the server, but still allows other checks like expiry date and hostname
+- Client supports self-signed certs sent by the server, but still has other checks like expiry date and hostname
   - The original library could only work with self-signed certs by disabling all security.
+- Invalid status code numbers raise an error
+- Set default port and scheme for client requests
+- Raise error when META strings are too long in the response header
 
 ## Example Server
 The repository comes with an example server that respond with an hardcoded text
