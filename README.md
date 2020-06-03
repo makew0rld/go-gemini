@@ -19,6 +19,4 @@ to the root page. To build the server run the following command:
     make build
 
 ## License
-The GNU Lesser General Public License or LGPL, version 3.0. See [LICENSE](LICENSE) for details. The gist of it is that proprietary code **can** legally make use of this library unaltered, but any modifications to the library source code must be released, under the same license.
-
-The original library was under the ISC License, see [OLD-LICENSE](OLD-LICENSE) for details. The ISC is permissive and GPL-compatible, so relicensing the library is legally allowed.
+This library is under the ISC License, see the [LICENSE](./LICENSE) file for details.
