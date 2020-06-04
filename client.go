@@ -98,8 +98,11 @@ func (c *Client) connect(res *Response, parsedURL *url.URL) (io.ReadWriteCloser,
 	}
 
 	// Verify hostname
-	if !c.NoHostnameCheck && conn.VerifyHostname(parsedURL.Hostname()) != nil {
-		return nil, fmt.Errorf("hostname does not verify")
+	if !c.NoHostnameCheck {
+		err := conn.VerifyHostname(parsedURL.Hostname())
+		if err != nil {
+			return nil, fmt.Errorf("hostname does not verify: %v", err)
+		}
 	}
 	// Verify expiry
 	if !c.NoTimeCheck {
