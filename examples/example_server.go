@@ -14,11 +14,11 @@ type ExampleHandler struct {
 func (h ExampleHandler) Handle(r gemini.Request) *gemini.Response {
 	if r.URL.Path != "/" {
 		body := ioutil.NopCloser(strings.NewReader("Not Found"))
-		return &gemini.Response{50, "text/gemini", body}
+		return &gemini.Response{50, "text/gemini", body, nil}
 	}
 
 	body := ioutil.NopCloser(strings.NewReader("Hello World"))
-	return &gemini.Response{20, "text/gemini", body}
+	return &gemini.Response{20, "text/gemini", body, nil}
 }
 
 func main() {

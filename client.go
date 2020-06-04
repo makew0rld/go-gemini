@@ -3,6 +3,7 @@ package gemini
 import (
 	"bytes"
 	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 	"io"
 	"net"
@@ -17,6 +18,7 @@ type Response struct {
 	Status int
 	Meta   string
 	Body   io.ReadCloser
+	Cert   *x509.Certificate
 }
 
 type header struct {
@@ -56,7 +58,9 @@ func (c *Client) Fetch(rawURL string) (*Response, error) {
 		parsedURL.Scheme = "gemini"
 	}
 
-	conn, err := c.connect(parsedURL)
+	res := Response{}
+
+	conn, err := c.connect(&res, parsedURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to the server: %v", err)
 	}
@@ -67,7 +71,7 @@ func (c *Client) Fetch(rawURL string) (*Response, error) {
 		return nil, err
 	}
 
-	res, err := getResponse(conn)
+	err = getResponse(&res, conn)
 	if err != nil {
 		return nil, err
 	}
@@ -75,10 +79,10 @@ func (c *Client) Fetch(rawURL string) (*Response, error) {
 		return nil, fmt.Errorf("invalid status code: %v", res.Status)
 	}
 
-	return res, nil
+	return &res, nil
 }
 
-func (c *Client) connect(parsedURL *url.URL) (io.ReadWriteCloser, error) {
+func (c *Client) connect(res *Response, parsedURL *url.URL) (io.ReadWriteCloser, error) {
 	conf := &tls.Config{
 		MinVersion:         tls.VersionTLS12,
 		InsecureSkipVerify: true, // This must be set to allow self-signed certs
@@ -109,6 +113,8 @@ func (c *Client) connect(parsedURL *url.URL) (io.ReadWriteCloser, error) {
 		}
 	}
 
+	res.Cert = conn.ConnectionState().PeerCertificates[0]
+
 	return conn, nil
 }
 
@@ -126,14 +132,17 @@ func sendRequest(conn io.Writer, requestURL string) error {
 	return nil
 }
 
-func getResponse(conn io.ReadCloser) (*Response, error) {
+func getResponse(res *Response, conn io.ReadCloser) error {
 	header, err := getHeader(conn)
 	if err != nil {
 		conn.Close()
-		return &Response{}, fmt.Errorf("failed to get header: %v", err)
+		return fmt.Errorf("failed to get header: %v", err)
 	}
 
-	return &Response{header.status, header.meta, conn}, nil
+	res.Status = header.status
+	res.Meta = header.meta
+	res.Body = conn
+	return nil
 }
 
 func getHeader(conn io.Reader) (header, error) {

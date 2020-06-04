@@ -40,7 +40,7 @@ func TestGetResponse(t *testing.T) {
 		file     string
 		expected Response
 	}{
-		{"resources/tests/simple_response", Response{20, "text/gemini", ioutil.NopCloser(strings.NewReader("This is the content of the page\r\n"))}},
+		{"resources/tests/simple_response", Response{20, "text/gemini", ioutil.NopCloser(strings.NewReader("This is the content of the page\r\n")), nil}},
 	}
 
 	for _, tc := range tests {
@@ -49,12 +49,13 @@ func TestGetResponse(t *testing.T) {
 			t.Fatalf("failed to get test case file %s: %v", tc.file, err)
 		}
 
-		res, err := getResponse(f)
+		res := Response{}
+		err = getResponse(&res, f)
 		if err != nil {
 			t.Fatalf("failed to parse response %s: %v", tc.file, err)
 		}
 
-		diff := compareResponses(&tc.expected, res)
+		diff := compareResponses(&tc.expected, &res)
 		if diff != "" {
 			t.Fatalf(diff)
 		}
@@ -63,14 +64,14 @@ func TestGetResponse(t *testing.T) {
 }
 
 func TestGetResponseEmptyResponse(t *testing.T) {
-	_, err := getResponse(ioutil.NopCloser(strings.NewReader("")))
+	err := getResponse(&Response{}, ioutil.NopCloser(strings.NewReader("")))
 	if err == nil {
 		t.Fatalf("expected to get an error for empty response, got nil instead")
 	}
 }
 
 func TestGetResponseInvalidStatus(t *testing.T) {
-	_, err := getResponse(ioutil.NopCloser(strings.NewReader("AA\tmeta\r\n")))
+	err := getResponse(&Response{}, ioutil.NopCloser(strings.NewReader("AA\tmeta\r\n")))
 	if err == nil {
 		t.Fatalf("expected to get an error for invalid status response, got nil instead")
 	}
