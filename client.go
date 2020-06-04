@@ -108,10 +108,10 @@ func (c *Client) connect(res *Response, parsedURL *url.URL) (io.ReadWriteCloser,
 	}
 	// Verify expiry
 	if !c.NoTimeCheck {
-		if cert.NotBefore.Before(time.Now()) {
+		if cert.NotBefore.After(time.Now()) {
 			// It's a future cert
 			return nil, fmt.Errorf("server cert is for the future")
-		} else if cert.NotAfter.After(time.Now()) {
+		} else if cert.NotAfter.Before(time.Now()) {
 			// It's expired
 			return nil, fmt.Errorf("server cert is expired")
 		}
