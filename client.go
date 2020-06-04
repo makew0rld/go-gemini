@@ -97,26 +97,27 @@ func (c *Client) connect(res *Response, parsedURL *url.URL) (io.ReadWriteCloser,
 		return conn, nil
 	}
 
+	cert := conn.ConnectionState().PeerCertificates[0]
+
 	// Verify hostname
 	if !c.NoHostnameCheck {
-		err := conn.VerifyHostname(parsedURL.Hostname())
+		err := cert.VerifyHostname(parsedURL.Hostname())
 		if err != nil {
 			return nil, fmt.Errorf("hostname does not verify: %v", err)
 		}
 	}
 	// Verify expiry
 	if !c.NoTimeCheck {
-		serverCert := conn.ConnectionState().PeerCertificates[0]
-		if serverCert.NotBefore.Before(time.Now()) {
+		if cert.NotBefore.Before(time.Now()) {
 			// It's a future cert
 			return nil, fmt.Errorf("server cert is for the future")
-		} else if serverCert.NotAfter.After(time.Now()) {
+		} else if cert.NotAfter.After(time.Now()) {
 			// It's expired
 			return nil, fmt.Errorf("server cert is expired")
 		}
 	}
 
-	res.Cert = conn.ConnectionState().PeerCertificates[0]
+	res.Cert = cert
 
 	return conn, nil
 }
