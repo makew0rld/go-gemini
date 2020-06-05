@@ -15,11 +15,5 @@ This fork of the library improves on the original in several ways, some listed a
 - Set default port and scheme for client requests
 - Raise error when META strings are too long in the response header
 
-## Example Server
-The repository comes with an example server that respond with an hardcoded text
-to the root page. To build the server run the following command:
-
-    make build
-
 ## License
 This library is under the ISC License, see the [LICENSE](./LICENSE) file for details.
