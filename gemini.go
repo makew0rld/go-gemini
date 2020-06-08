@@ -4,7 +4,8 @@ import "fmt"
 
 // Gemini status codes as defined in the Gemini spec Appendix 1.
 const (
-	StatusInput = 10
+	StatusInput          = 10
+	StatusSensitiveInput = 11
 
 	StatusSuccess                              = 20
 	StatusSuccessEndOfClientCertificateSession = 21
@@ -35,7 +36,7 @@ const (
 
 // All the statuses between 10 and 65 that are invalid
 var invalidStatuses = []int{
-	11, 12, 13, 14, 15, 16, 17, 18, 19,
+	12, 13, 14, 15, 16, 17, 18, 19,
 	22, 23, 24, 25, 26, 27, 28, 29,
 	32, 33, 34, 35, 36, 37, 38, 39,
 	45, 46, 47, 48, 49,
