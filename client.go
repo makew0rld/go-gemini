@@ -65,7 +65,7 @@ func (c *Client) Fetch(rawURL string) (*Response, error) {
 		return nil, fmt.Errorf("failed to connect to the server: %v", err)
 	}
 
-	err = sendRequest(conn, rawURL)
+	err = sendRequest(conn, parsedURL.String())
 	if err != nil {
 		conn.Close()
 		return nil, err
