@@ -13,12 +13,14 @@ import (
 	"time"
 )
 
-// Response represent the response from a Gemini server.
+// Response represents the response from a Gemini server.
 type Response struct {
 	Status int
 	Meta   string
 	Body   io.ReadCloser
-	Cert   *x509.Certificate
+	// Cert is the client or server cert received in the connection.
+	// If you are the client, then it is the server cert, and vice versa.
+	Cert *x509.Certificate
 }
 
 type header struct {
@@ -93,11 +95,12 @@ func (c *Client) connect(res *Response, parsedURL *url.URL) (io.ReadWriteCloser,
 		return conn, err
 	}
 
+	cert := conn.ConnectionState().PeerCertificates[0]
+	res.Cert = cert
+
 	if c.Insecure {
 		return conn, nil
 	}
-
-	cert := conn.ConnectionState().PeerCertificates[0]
 
 	// Verify hostname
 	if !c.NoHostnameCheck {
@@ -116,8 +119,6 @@ func (c *Client) connect(res *Response, parsedURL *url.URL) (io.ReadWriteCloser,
 			return nil, fmt.Errorf("server cert is expired")
 		}
 	}
-
-	res.Cert = cert
 
 	return conn, nil
 }
