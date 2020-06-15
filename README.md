@@ -2,7 +2,9 @@
 
 go-gemini is a library that provides an easy interface to create client and servers that speak the [Gemini protocol](https://gemini.circumlunar.space/).
 
-This version of the library was forked from [~yotam/go-gemini](https://git.sr.ht/~yotam/go-gemini/) to add additional features, as well as update it to support spec v0.13.0. At the time of forking, it had not seen any new commit for 5 months, and was based on v0.9.2. If there are any future upstream updates, I will make an effort to include them.
+**Spec version supported:** v0.14.1, June 15th 2020
+
+This version of the library was forked from [~yotam/go-gemini](https://git.sr.ht/~yotam/go-gemini/) to add additional features, as well as update it to support newer specs. At the time of forking, it had not seen any new commit for 5 months, and was based on v0.9.2. If there are any future upstream updates, I will make an effort to include them.
 
 At the moment, this library focuses more on the client side of things, and support is not guaranteed. Please feel free to file issues though.
 
@@ -14,6 +16,7 @@ This fork of the library improves on the original in several ways, some listed a
 - Invalid status code numbers raise an error
 - Set default port and scheme for client requests
 - Raise error when META strings are too long in the response header
+- Supports new status code updates
 
 ## License
 This library is under the ISC License, see the [LICENSE](./LICENSE) file for details.

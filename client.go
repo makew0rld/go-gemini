@@ -75,9 +75,11 @@ func (c *Client) Fetch(rawURL string) (*Response, error) {
 
 	err = getResponse(&res, conn)
 	if err != nil {
+		conn.Close()
 		return nil, err
 	}
 	if !c.AllowInvalidStatuses && !IsStatusValid(res.Status) {
+		conn.Close()
 		return nil, fmt.Errorf("invalid status code: %v", res.Status)
 	}
 
@@ -112,10 +114,8 @@ func (c *Client) connect(res *Response, parsedURL *url.URL) (io.ReadWriteCloser,
 	// Verify expiry
 	if !c.NoTimeCheck {
 		if cert.NotBefore.After(time.Now()) {
-			// It's a future cert
 			return nil, fmt.Errorf("server cert is for the future")
 		} else if cert.NotAfter.Before(time.Now()) {
-			// It's expired
 			return nil, fmt.Errorf("server cert is expired")
 		}
 	}
@@ -133,7 +133,6 @@ func sendRequest(conn io.Writer, requestURL string) error {
 	if err != nil {
 		return fmt.Errorf("could not send request to the server: %v", err)
 	}
-
 	return nil
 }
 
@@ -162,7 +161,7 @@ func getHeader(conn io.Reader) (header, error) {
 		return header{}, fmt.Errorf("unexpected status value %v: %v", fields[0], err)
 	}
 
-	meta := strings.Join(fields[1:], " ")
+	meta := strings.TrimRight(string(line)[3:], "\r\n")
 	if len(meta) > 1024 {
 		return header{}, fmt.Errorf("meta string is too long")
 	}

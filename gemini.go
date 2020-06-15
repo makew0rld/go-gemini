@@ -26,15 +26,18 @@ const (
 	StatusProxyRequestRefused = 53
 	StatusBadRequest          = 59
 
-	StatusClientCertificateRequired     = 60
-	StatusTransientCertificateRequested = 61
-	StatusAuthorisedCertificateRequired = 62
-	StatusCertificateNotAccepted        = 63
-	StatusFutureCertificateRejected     = 64
-	StatusExpiredCertificateRejected    = 65
+	StatusClientCertificateRequired = 60
+	StatusCertificateNotAuthorised  = 61
+	StatusCertificateNotValid       = 62
+
+	StatusDeprecatedTransientCertificateRequested = 61
+	StatusDeprecatedAuthorisedCertificateRequired = 62
+	StatusDeprecatedCertificateNotAccepted        = 63
+	StatusDeprecatedFutureCertificateRejected     = 64
+	StatusDeprecatedExpiredCertificateRejected    = 65
 )
 
-// All the statuses between 10 and 65 that are invalid
+// All the statuses between 10 and 62 that are invalid
 var invalidStatuses = []int{
 	12, 13, 14, 15, 16, 17, 18, 19,
 	22, 23, 24, 25, 26, 27, 28, 29,
@@ -50,7 +53,7 @@ func SimplifyStatus(status int) int {
 
 // IsStatusValid checks whether an int status is covered by the spec.
 func IsStatusValid(status int) bool {
-	if status < 10 || status > 65 {
+	if status < 10 || status > 62 {
 		return false
 	}
 	for _, v := range invalidStatuses {
