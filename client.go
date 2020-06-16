@@ -97,6 +97,8 @@ func (c *Client) connect(res *Response, parsedURL *url.URL) (io.ReadWriteCloser,
 		return conn, err
 	}
 
+	conn.SetReadDeadline(time.Now().Add(time.Hour))
+
 	cert := conn.ConnectionState().PeerCertificates[0]
 	res.Cert = cert
 
