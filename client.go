@@ -176,8 +176,10 @@ func readHeader(conn io.Reader) ([]byte, error) {
 	buf := make([]byte, 1)
 
 	for {
-		_, err := conn.Read(buf)
-		if err != nil {
+		n, err := conn.Read(buf)
+		if err == io.EOF && n <= 0 {
+			return []byte{}, err
+		} else if err != nil {
 			return []byte{}, err
 		}
 
