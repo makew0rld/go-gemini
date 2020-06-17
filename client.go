@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"crypto/tls"
 	"crypto/x509"
-	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -176,15 +175,9 @@ func readHeader(conn io.Reader) ([]byte, error) {
 	// A small buffer is inefficient but the maximum length of the header is small so it's okay
 	buf := make([]byte, 1)
 
-	var err error
-	// Read in a loop, until end of header is reached.
-	// Keep reading if EOF is returned, with a timeout.
-	start := time.Now()
-	for time.Since(start).Seconds() > 10 {
-		_, err = conn.Read(buf)
-		if errors.Is(err, io.EOF) {
-			continue
-		} else if err != nil {
+	for {
+		_, err := conn.Read(buf)
+		if err != nil {
 			return []byte{}, err
 		}
 
@@ -193,5 +186,4 @@ func readHeader(conn io.Reader) ([]byte, error) {
 			return line[:len(line)-len(delim)], nil
 		}
 	}
-	return []byte{}, fmt.Errorf("timed out: %v", err)
 }
