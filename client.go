@@ -179,7 +179,7 @@ func readHeader(conn io.Reader) ([]byte, error) {
 		n, err := conn.Read(buf)
 		if err == io.EOF && n <= 0 {
 			return []byte{}, err
-		} else if err != nil {
+		} else if err != nil && err != io.EOF {
 			return []byte{}, err
 		}
 
