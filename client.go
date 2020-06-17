@@ -40,9 +40,12 @@ type Client struct {
 	// Insecure disables all TLS-based checks, use with caution.
 	// It overrides all the variables above.
 	Insecure bool
+	// Timeout is equivalent to the Timeout field in net.Dialer.
+	// The timeout of the DefaultClient is 5 seconds.
+	Timeout time.Duration
 }
 
-var DefaultClient = &Client{}
+var DefaultClient = &Client{Timeout: 5 * time.Second}
 
 // Fetch a resource from a Gemini server with the given URL
 func (c *Client) Fetch(rawURL string) (*Response, error) {
@@ -92,7 +95,7 @@ func (c *Client) connect(res *Response, parsedURL *url.URL) (io.ReadWriteCloser,
 		InsecureSkipVerify: true, // This must be set to allow self-signed certs
 	}
 
-	conn, err := tls.Dial("tcp", parsedURL.Host, conf)
+	conn, err := tls.DialWithDialer(&net.Dialer{Timeout: c.Timeout}, "tcp", parsedURL.Host, conf)
 	if err != nil {
 		return conn, err
 	}
