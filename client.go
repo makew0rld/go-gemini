@@ -180,7 +180,7 @@ func readHeader(conn io.Reader) ([]byte, error) {
 	// Read in a loop, until end of header is reached.
 	// Keep reading if EOF is returned, with a timeout.
 	start := time.Now()
-	for time.Since(start).Seconds() < 10 {
+	for time.Since(start).Seconds() > 10 {
 		_, err = conn.Read(buf)
 		if errors.Is(err, io.EOF) {
 			continue
