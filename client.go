@@ -40,12 +40,17 @@ type Client struct {
 	// Insecure disables all TLS-based checks, use with caution.
 	// It overrides all the variables above.
 	Insecure bool
-	// Timeout is equivalent to the Timeout field in net.Dialer.
+	// ConnTimeout is equivalent to the Timeout field in net.Dialer.
 	// The timeout of the DefaultClient is 5 seconds.
-	Timeout time.Duration
+	// It's the timeout for first forming the connection.
+	ConnTimeout time.Duration
+	// RespTimeout is the max amount time of a server can take to start responding,
+	// after the connection is made and the URL was sent.
+	// In the DefaultClient it is 5 seconds.
+	RespTimeout time.Duration
 }
 
-var DefaultClient = &Client{Timeout: 5 * time.Second}
+var DefaultClient = &Client{ConnTimeout: 5 * time.Second, RespTimeout: 5 * time.Second}
 
 // Fetch a resource from a Gemini server with the given URL
 func (c *Client) Fetch(rawURL string) (*Response, error) {
@@ -76,7 +81,7 @@ func (c *Client) Fetch(rawURL string) (*Response, error) {
 		return nil, err
 	}
 
-	err = getResponse(&res, conn)
+	err = c.getResponse(&res, conn)
 	if err != nil {
 		conn.Close()
 		return nil, err
@@ -95,7 +100,7 @@ func (c *Client) connect(res *Response, parsedURL *url.URL) (io.ReadWriteCloser,
 		InsecureSkipVerify: true, // This must be set to allow self-signed certs
 	}
 
-	conn, err := tls.DialWithDialer(&net.Dialer{Timeout: c.Timeout}, "tcp", parsedURL.Host, conf)
+	conn, err := tls.DialWithDialer(&net.Dialer{Timeout: c.ConnTimeout}, "tcp", parsedURL.Host, conf)
 	if err != nil {
 		return conn, err
 	}
@@ -139,8 +144,8 @@ func sendRequest(conn io.Writer, requestURL string) error {
 	return nil
 }
 
-func getResponse(res *Response, conn io.ReadCloser) error {
-	header, err := getHeader(conn)
+func (c *Client) getResponse(res *Response, conn io.ReadCloser) error {
+	header, err := c.getHeader(conn)
 	if err != nil {
 		conn.Close()
 		return fmt.Errorf("failed to get header: %v", err)
@@ -152,8 +157,8 @@ func getResponse(res *Response, conn io.ReadCloser) error {
 	return nil
 }
 
-func getHeader(conn io.Reader) (header, error) {
-	line, err := readHeader(conn)
+func (c *Client) getHeader(conn io.Reader) (header, error) {
+	line, err := c.readHeader(conn)
 	if err != nil {
 		return header{}, fmt.Errorf("failed to read header: %v", err)
 	}
@@ -172,13 +177,14 @@ func getHeader(conn io.Reader) (header, error) {
 	return header{status, meta}, nil
 }
 
-func readHeader(conn io.Reader) ([]byte, error) {
+func (c *Client) readHeader(conn io.Reader) ([]byte, error) {
 	var line []byte
 	delim := []byte("\r\n")
 	// A small buffer is inefficient but the maximum length of the header is small so it's okay
 	buf := make([]byte, 1)
 
-	for {
+	start := time.Now()
+	for time.Since(start).Nanoseconds() > c.RespTimeout.Nanoseconds() {
 		n, err := conn.Read(buf)
 		if err == io.EOF && n <= 0 {
 			return []byte{}, err
@@ -191,4 +197,5 @@ func readHeader(conn io.Reader) ([]byte, error) {
 			return line[:len(line)-len(delim)], nil
 		}
 	}
+	return []byte{}, fmt.Errorf("server response took too long")
 }
