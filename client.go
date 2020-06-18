@@ -184,7 +184,7 @@ func (c *Client) readHeader(conn io.Reader) ([]byte, error) {
 	buf := make([]byte, 1)
 
 	start := time.Now()
-	for time.Since(start).Nanoseconds() > c.RespTimeout.Nanoseconds() {
+	for time.Since(start).Nanoseconds() < c.RespTimeout.Nanoseconds() {
 		n, err := conn.Read(buf)
 		if err == io.EOF && n <= 0 {
 			return []byte{}, err
