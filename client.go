@@ -41,11 +41,12 @@ type Client struct {
 	// It overrides all the variables above.
 	Insecure bool
 	// Timeout is equivalent to the Timeout field in net.Dialer.
-	// The timeout of the DefaultClient is 5 seconds.
+	// It's the time it takes to form the initial connection.
+	// The timeout of the DefaultClient is 15 seconds.
 	Timeout time.Duration
 }
 
-var DefaultClient = &Client{Timeout: 5 * time.Second}
+var DefaultClient = &Client{Timeout: 15 * time.Second}
 
 // Fetch a resource from a Gemini server with the given URL
 func (c *Client) Fetch(rawURL string) (*Response, error) {
