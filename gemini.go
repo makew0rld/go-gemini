@@ -7,8 +7,7 @@ const (
 	StatusInput          = 10
 	StatusSensitiveInput = 11
 
-	StatusSuccess                              = 20
-	StatusSuccessEndOfClientCertificateSession = 21
+	StatusSuccess = 20
 
 	StatusRedirect          = 30
 	StatusRedirectTemporary = 30
@@ -30,17 +29,18 @@ const (
 	StatusCertificateNotAuthorised  = 61
 	StatusCertificateNotValid       = 62
 
-	StatusDeprecatedTransientCertificateRequested = 61
-	StatusDeprecatedAuthorisedCertificateRequired = 62
-	StatusDeprecatedCertificateNotAccepted        = 63
-	StatusDeprecatedFutureCertificateRejected     = 64
-	StatusDeprecatedExpiredCertificateRejected    = 65
+	StatusDeprecatedSuccessEndOfClientCertificateSession = 21
+	StatusDeprecatedTransientCertificateRequested        = 61
+	StatusDeprecatedAuthorisedCertificateRequired        = 62
+	StatusDeprecatedCertificateNotAccepted               = 63
+	StatusDeprecatedFutureCertificateRejected            = 64
+	StatusDeprecatedExpiredCertificateRejected           = 65
 )
 
 // All the statuses between 10 and 62 that are invalid
 var invalidStatuses = []int{
 	12, 13, 14, 15, 16, 17, 18, 19,
-	22, 23, 24, 25, 26, 27, 28, 29,
+	21, 22, 23, 24, 25, 26, 27, 28, 29,
 	32, 33, 34, 35, 36, 37, 38, 39,
 	45, 46, 47, 48, 49,
 	54, 55, 56, 57, 58,
