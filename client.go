@@ -54,19 +54,20 @@ func (c *Client) Fetch(rawURL string) (*Response, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse URL: %v", err)
 	}
-	// Add default protocol port if none provided
-	if parsedURL.Port() == "" {
-		parsedURL.Host = net.JoinHostPort(parsedURL.Hostname(), "1965")
-	}
 
-	// Add gemini scheme if not provided
-	if parsedURL.Scheme == "" {
-		parsedURL.Scheme = "gemini"
+	if len(rawURL) > 1024 {
+		// Out of spec
+		return nil, fmt.Errorf("url is too long")
 	}
 
 	res := Response{}
 
-	conn, err := c.connect(&res, parsedURL)
+	host := parsedURL.Host
+	if parsedURL.Port() == "" {
+		host = net.JoinHostPort(parsedURL.Hostname(), "1965")
+	}
+
+	conn, err := c.connect(&res, host, parsedURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to the server: %v", err)
 	}
@@ -90,13 +91,13 @@ func (c *Client) Fetch(rawURL string) (*Response, error) {
 	return &res, nil
 }
 
-func (c *Client) connect(res *Response, parsedURL *url.URL) (io.ReadWriteCloser, error) {
+func (c *Client) connect(res *Response, host string, parsedURL *url.URL) (io.ReadWriteCloser, error) {
 	conf := &tls.Config{
 		MinVersion:         tls.VersionTLS12,
 		InsecureSkipVerify: true, // This must be set to allow self-signed certs
 	}
 
-	conn, err := tls.DialWithDialer(&net.Dialer{Timeout: c.Timeout}, "tcp", parsedURL.Host, conf)
+	conn, err := tls.DialWithDialer(&net.Dialer{Timeout: c.Timeout}, "tcp", host, conf)
 	if err != nil {
 		return conn, err
 	}
