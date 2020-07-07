@@ -106,6 +106,9 @@ func getRequestURL(conn io.Reader) (*url.URL, error) {
 	if err != nil {
 		return nil, fmt.Errorf("couldn't parse request URL")
 	}
+	if parsedURL.User != nil {
+		return nil, fmt.Errorf("userinfo not allowed in request URL")
+	}
 	if parsedURL.Scheme == "" {
 		// Default scheme is gemini
 		parsedURL.Scheme = "gemini"
