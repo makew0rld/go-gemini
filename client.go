@@ -8,6 +8,7 @@ import (
 	"io"
 	"net"
 	"net/url"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -95,6 +96,15 @@ func (c *Client) connect(res *Response, host string, parsedURL *url.URL) (io.Rea
 	conf := &tls.Config{
 		MinVersion:         tls.VersionTLS12,
 		InsecureSkipVerify: true, // This must be set to allow self-signed certs
+	}
+
+	keylogfile := os.Getenv("SSLKEYLOGFILE")
+	if keylogfile != "" {
+		w, err := os.OpenFile(keylogfile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0600)
+		if err == nil {
+			conf.KeyLogWriter = w
+			defer w.Close()
+		}
 	}
 
 	conn, err := tls.DialWithDialer(&net.Dialer{Timeout: c.Timeout}, "tcp", host, conf)

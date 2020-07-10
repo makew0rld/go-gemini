@@ -17,6 +17,7 @@ This fork of the library improves on the original in several ways, some listed a
 - Set default port and scheme for client requests
 - Raise error when META strings are too long in the response header
 - Supports new status code updates
+- If `SSLKEYLOGFILE` is set, session keys are written to the file in NSS format. This is useful for debugging TLS connections (but breaks security, so don't use unless necessary).
 
 ## License
 This library is under the ISC License, see the [LICENSE](./LICENSE) file for details.
