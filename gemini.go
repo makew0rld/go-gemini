@@ -2,6 +2,10 @@ package gemini
 
 import "fmt"
 
+const (
+	URLMaxLength = 1024
+)
+
 // Gemini status codes as defined in the Gemini spec Appendix 1.
 const (
 	StatusInput          = 10
