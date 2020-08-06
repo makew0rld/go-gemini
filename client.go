@@ -50,6 +50,7 @@ type Client struct {
 var DefaultClient = &Client{Timeout: 15 * time.Second}
 
 // Fetch a resource from a Gemini server with the given URL.
+// It assumes port 1965 if no port is specified.
 func (c *Client) Fetch(rawURL string) (*Response, error) {
 	parsedURL, err := url.Parse(rawURL)
 	if err != nil {
@@ -64,15 +65,26 @@ func (c *Client) Fetch(rawURL string) (*Response, error) {
 
 // FetchWithHost fetches a resource from a Gemini server at the given host, with the given URL.
 // This can be used for proxying, where the URL host and actual server don't match.
+// It assumes the host is using port 1965 if no port number is provided.
 func (c *Client) FetchWithHost(host, rawURL string) (*Response, error) {
+
+	// URL checks
 	parsedURL, err := url.Parse(rawURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse URL: %v", err)
 	}
-
 	if len(rawURL) > 1024 {
 		// Out of spec
 		return nil, fmt.Errorf("url is too long")
+	}
+
+	// Host check
+	hostOnly, port, err := net.SplitHostPort(host)
+	if err != nil {
+		return nil, fmt.Errorf("couldn't process host: %v", err)
+	}
+	if port == "" {
+		host = net.JoinHostPort(hostOnly, "1965")
 	}
 
 	res := Response{}
