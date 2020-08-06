@@ -78,13 +78,11 @@ func (c *Client) FetchWithHost(host, rawURL string) (*Response, error) {
 		return nil, fmt.Errorf("url is too long")
 	}
 
-	// Host check
-	hostOnly, port, err := net.SplitHostPort(host)
+	// Add port to host if needed
+	_, _, err = net.SplitHostPort(host)
 	if err != nil {
-		return nil, fmt.Errorf("couldn't process host: %v", err)
-	}
-	if port == "" {
-		host = net.JoinHostPort(hostOnly, "1965")
+		// Error likely means there's no port in the host
+		host = net.JoinHostPort(host, "1965")
 	}
 
 	res := Response{}
