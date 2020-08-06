@@ -49,8 +49,22 @@ type Client struct {
 
 var DefaultClient = &Client{Timeout: 15 * time.Second}
 
-// Fetch a resource from a Gemini server with the given URL
+// Fetch a resource from a Gemini server with the given URL.
 func (c *Client) Fetch(rawURL string) (*Response, error) {
+	parsedURL, err := url.Parse(rawURL)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse URL: %v", err)
+	}
+	host := parsedURL.Host
+	if parsedURL.Port() == "" {
+		host = net.JoinHostPort(parsedURL.Hostname(), "1965")
+	}
+	return c.FetchWithHost(host, rawURL)
+}
+
+// FetchWithHost fetches a resource from a Gemini server at the given host, with the given URL.
+// This can be used for proxying, where the URL host and actual server don't match.
+func (c *Client) FetchWithHost(host, rawURL string) (*Response, error) {
 	parsedURL, err := url.Parse(rawURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse URL: %v", err)
@@ -62,11 +76,6 @@ func (c *Client) Fetch(rawURL string) (*Response, error) {
 	}
 
 	res := Response{}
-
-	host := parsedURL.Host
-	if parsedURL.Port() == "" {
-		host = net.JoinHostPort(parsedURL.Hostname(), "1965")
-	}
 
 	conn, err := c.connect(&res, host, parsedURL)
 	if err != nil {
@@ -90,6 +99,17 @@ func (c *Client) Fetch(rawURL string) (*Response, error) {
 	}
 
 	return &res, nil
+}
+
+// Fetch a resource from a Gemini server with the default client.
+func Fetch(url string) (*Response, error) {
+	return DefaultClient.Fetch(url)
+}
+
+// FetchWithHost fetches a resource from a Gemini server at the given host, with the default client.
+// This can be used for proxying, where the URL host and actual server don't match.
+func FetchWithHost(host, url string) (*Response, error) {
+	return DefaultClient.FetchWithHost(host, url)
 }
 
 func (c *Client) connect(res *Response, host string, parsedURL *url.URL) (io.ReadWriteCloser, error) {
@@ -136,11 +156,6 @@ func (c *Client) connect(res *Response, host string, parsedURL *url.URL) (io.Rea
 	}
 
 	return conn, nil
-}
-
-// Fetch a resource from a Gemini server with the default client
-func Fetch(url string) (*Response, error) {
-	return DefaultClient.Fetch(url)
 }
 
 func sendRequest(conn io.Writer, requestURL string) error {
