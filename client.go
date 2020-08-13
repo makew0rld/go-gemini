@@ -202,7 +202,7 @@ func getHeader(conn io.Reader) (header, error) {
 		return header{}, fmt.Errorf("unexpected status value %v: %v", fields[0], err)
 	}
 
-	meta := strings.TrimRight(string(line)[3:], "\r\n")
+	meta := strings.TrimSuffix(string(line)[3:], "\r\n")
 	if len(meta) > 1024 {
 		return header{}, fmt.Errorf("meta string is too long")
 	}

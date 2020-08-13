@@ -84,3 +84,11 @@ func TestGetHeaderLongMeta(t *testing.T) {
 		t.Fatalf("expected to get an error for meta longer than 1024")
 	}
 }
+
+func TestGetHeaderOnlyLF(t *testing.T) {
+	// Meta longer than 1024 chars
+	_, err := getHeader(strings.NewReader("20\ttest" + "\n"))
+	if err == nil {
+		t.Fatalf("expected to get an error for header ending only in LF")
+	}
+}
