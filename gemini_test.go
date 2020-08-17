@@ -21,3 +21,15 @@ func TestSimplifyStatus(t *testing.T) {
 		}
 	}
 }
+
+func TestQuery(t *testing.T) {
+	query := `t/&^*% es\++\t`
+	escaped := `t%2F&%5E%2A%25%20es%5C%2B%2B%5Ct`
+	if QueryEscape(query) != escaped {
+		t.Errorf("Query escape failed")
+	}
+	q, err := QueryUnescape(escaped)
+	if q != query || err != nil {
+		t.Errorf("Query unescape failed")
+	}
+}

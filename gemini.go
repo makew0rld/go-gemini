@@ -1,6 +1,10 @@
 package gemini
 
-import "fmt"
+import (
+	"fmt"
+	"net/url"
+	"strings"
+)
 
 const (
 	URLMaxLength = 1024
@@ -66,6 +70,18 @@ func IsStatusValid(status int) bool {
 		}
 	}
 	return true
+}
+
+// QueryEscape provides URL query escaping in a way that follows the Gemini spec.
+// It is the same as url.PathEscape, but it also replaces the +, because Gemini
+// requires percent-escaping for queries.
+func QueryEscape(query string) string {
+	return strings.ReplaceAll(url.PathEscape(query), "+", "%2B")
+}
+
+// QueryUnescape is the same as url.PathUnescape
+func QueryUnescape(query string) (string, error) {
+	return url.PathUnescape(query)
 }
 
 type Error struct {
