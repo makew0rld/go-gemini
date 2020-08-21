@@ -79,7 +79,7 @@ func TestGetResponseInvalidStatus(t *testing.T) {
 
 func TestGetHeaderLongMeta(t *testing.T) {
 	// Meta longer than 1024 chars
-	_, err := getHeader(strings.NewReader("20\t" + strings.Repeat("a", 1025) + "\r\n"))
+	_, err := getHeader(strings.NewReader("20 " + strings.Repeat("a", 1025) + "\r\n"))
 	if err == nil {
 		t.Fatalf("expected to get an error for meta longer than 1024")
 	}
@@ -87,8 +87,15 @@ func TestGetHeaderLongMeta(t *testing.T) {
 
 func TestGetHeaderOnlyLF(t *testing.T) {
 	// Meta longer than 1024 chars
-	_, err := getHeader(strings.NewReader("20\ttest" + "\n"))
+	_, err := getHeader(strings.NewReader("20 test" + "\n"))
 	if err == nil {
 		t.Fatalf("expected to get an error for header ending only in LF")
+	}
+}
+
+func TestGetHeaderNoSpace(t *testing.T) {
+	_, err := getHeader(strings.NewReader("20\r\n"))
+	if err == nil {
+		t.Fatalf("expected to get an error for header with no space")
 	}
 }

@@ -197,12 +197,21 @@ func getHeader(conn io.Reader) (header, error) {
 	}
 
 	fields := strings.Fields(string(line))
+	if len(fields) < 2 && line[len(line)-1] != ' ' {
+		return header{}, fmt.Errorf("header not formatted correctly")
+	}
+
 	status, err := strconv.Atoi(fields[0])
 	if err != nil {
 		return header{}, fmt.Errorf("unexpected status value %v: %v", fields[0], err)
 	}
 
-	meta := strings.TrimSuffix(string(line)[3:], "\r\n")
+	var meta string
+	if len(line) <= 3 {
+		meta = ""
+	} else {
+		meta = string(line)[len(fields[0])+1:]
+	}
 	if len(meta) > 1024 {
 		return header{}, fmt.Errorf("meta string is too long")
 	}
