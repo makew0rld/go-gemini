@@ -1,7 +1,7 @@
 language: go
 
 go:
-  - "1.11"  # Debian Stable golang version
+  #- "1.11"  # Debian Stable golang version, FAILS due to strings.ReplaceAll
   - "1.12"
   - "1.13"
   - "1.14"

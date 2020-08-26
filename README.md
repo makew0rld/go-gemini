@@ -19,5 +19,9 @@ This fork of the library improves on the original in several ways, some listed a
 - Supports new status code updates
 - If `SSLKEYLOGFILE` is set, session keys are written to the file in NSS format. This is useful for debugging TLS connections (but breaks security, so don't use unless necessary).
 
+## Notes
+
+This library only works with Go 1.12 and higher.
+
 ## License
 This library is under the ISC License, see the [LICENSE](./LICENSE) file for details.
