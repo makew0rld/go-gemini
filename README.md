@@ -1,5 +1,7 @@
 # go-gemini
 
+[![travis build status](https://img.shields.io/travis/com/makeworld-the-better-one/go-gemini)](https://https://travis-ci.com/github/makeworld-the-better-one/go-gemini)
+
 go-gemini is a library that provides an easy interface to create client and servers that speak the [Gemini protocol](https://gemini.circumlunar.space/).
 
 **Spec version supported:** v0.14.1, June 15th 2020
