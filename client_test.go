@@ -78,10 +78,10 @@ func TestGetResponseInvalidStatus(t *testing.T) {
 }
 
 func TestGetHeaderLongMeta(t *testing.T) {
-	// Meta longer than 1024 chars
-	_, err := getHeader(strings.NewReader("20 " + strings.Repeat("a", 1025) + "\r\n"))
+	// Meta longer than allowed
+	_, err := getHeader(strings.NewReader("20 " + strings.Repeat("a", MetaMaxLength+1) + "\r\n"))
 	if err == nil {
-		t.Fatalf("expected to get an error for meta longer than 1024")
+		t.Fatalf(fmt.Sprintf("expected to get an error for meta longer than %d", MetaMaxLength))
 	}
 }
 

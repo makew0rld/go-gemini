@@ -73,7 +73,7 @@ func (c *Client) FetchWithHost(host, rawURL string) (*Response, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse URL: %v", err)
 	}
-	if len(rawURL) > 1024 {
+	if len(rawURL) > URLMaxLength {
 		// Out of spec
 		return nil, fmt.Errorf("url is too long")
 	}
@@ -212,7 +212,7 @@ func getHeader(conn io.Reader) (header, error) {
 	} else {
 		meta = string(line)[len(fields[0])+1:]
 	}
-	if len(meta) > 1024 {
+	if len(meta) > MetaMaxLength {
 		return header{}, fmt.Errorf("meta string is too long")
 	}
 

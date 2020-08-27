@@ -7,7 +7,8 @@ import (
 )
 
 const (
-	URLMaxLength = 1024
+	URLMaxLength  = 1024
+	MetaMaxLength = 1024
 )
 
 // Gemini status codes as defined in the Gemini spec Appendix 1.
