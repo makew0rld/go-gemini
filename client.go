@@ -35,12 +35,12 @@ type Client struct {
 	// NoHostnameCheck allows connections when the cert doesn't match the
 	// requested hostname or IP.
 	NoHostnameCheck bool
-	// AllowInvalidStatuses means the client won't raise an error if a status
-	// that is out of spec is returned.
-	AllowInvalidStatuses bool
 	// Insecure disables all TLS-based checks, use with caution.
 	// It overrides all the variables above.
 	Insecure bool
+	// AllowInvalidStatuses means the client won't raise an error if a status
+	// that is out of spec is returned.
+	AllowInvalidStatuses bool
 	// Timeout is equivalent to the Timeout field in net.Dialer.
 	// It's the time it takes to form the initial connection.
 	// The timeout of the DefaultClient is 15 seconds.
