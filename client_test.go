@@ -3,6 +3,7 @@ package gemini
 import (
 	"fmt"
 	"io/ioutil"
+	"net/url"
 	"os"
 	"strings"
 	"testing"
@@ -97,5 +98,40 @@ func TestGetHeaderNoSpace(t *testing.T) {
 	_, err := getHeader(strings.NewReader("20\r\n"))
 	if err == nil {
 		t.Fatalf("expected to get an error for header with no space")
+	}
+}
+
+func parse(s string) *url.URL {
+	p, _ := url.Parse(s)
+	return p
+}
+
+func TestGetHost(t *testing.T) {
+	tests := []struct {
+		host string
+		url  string
+	}{
+		{"example.com:1965", "gemini://example.com:1965"},
+		{"example.com:1965", "gemini://example.com"},
+		{"example.com:1965", "gemini://example.com/test//"},
+		{"example.com:123", "gemini://example.com:123"},
+		{"example.com:123", "gemini://example.com:123/test//"},
+		{"0.0.0.0:1965", "gemini://0.0.0.0:1965"},
+		{"0.0.0.0:1965", "gemini://0.0.0.0"},
+		{"0.0.0.0:1965", "gemini://0.0.0.0/test//"},
+		{"0.0.0.0:123", "gemini://0.0.0.0:123"},
+		{"0.0.0.0:123", "gemini://0.0.0.0:123/test//"},
+		{"[::1]:1965", "gemini://[::1]:1965"},
+		{"[::1]:1965", "gemini://[::1]"},
+		{"[::1]:1965", "gemini://[::1]/test//"},
+		{"[::1]:123", "gemini://[::1]:123"},
+		{"[::1]:123", "gemini://[::1]:123/test//"},
+	}
+
+	for _, tc := range tests {
+		host := getHost(parse(tc.url))
+		if tc.host != host {
+			t.Errorf("Got %s but expected %s for URL %s", host, tc.host, tc.url)
+		}
 	}
 }

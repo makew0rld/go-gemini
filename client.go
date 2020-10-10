@@ -49,6 +49,14 @@ type Client struct {
 
 var DefaultClient = &Client{Timeout: 15 * time.Second}
 
+func getHost(parsedURL *url.URL) string {
+	host := parsedURL.Host
+	if parsedURL.Port() == "" {
+		host = net.JoinHostPort(parsedURL.Hostname(), "1965")
+	}
+	return host
+}
+
 // Fetch a resource from a Gemini server with the given URL.
 // It assumes port 1965 if no port is specified.
 func (c *Client) Fetch(rawURL string) (*Response, error) {
@@ -56,17 +64,34 @@ func (c *Client) Fetch(rawURL string) (*Response, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse URL: %v", err)
 	}
-	host := parsedURL.Host
-	if parsedURL.Port() == "" {
-		host = net.JoinHostPort(parsedURL.Hostname(), "1965")
-	}
-	return c.FetchWithHost(host, rawURL)
+	return c.FetchWithHost(getHost(parsedURL), rawURL)
 }
 
 // FetchWithHost fetches a resource from a Gemini server at the given host, with the given URL.
 // This can be used for proxying, where the URL host and actual server don't match.
 // It assumes the host is using port 1965 if no port number is provided.
 func (c *Client) FetchWithHost(host, rawURL string) (*Response, error) {
+	// Call with empty PEM bytes to skip using a cert
+	return c.FetchWithHostAndCert(host, rawURL, []byte{}, []byte{})
+}
+
+// FetchWithCert fetches a resource from a Gemini server with the given URL.
+// It allows you to provide the bytes of a PEM encoded block for a client
+// certificate and its key. This allows you to make requests using client
+// certs.
+//
+// It assumes port 1965 if no port is specified.
+func (c *Client) FetchWithCert(rawURL string, certPEM, keyPEM []byte) (*Response, error) {
+	parsedURL, err := url.Parse(rawURL)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse URL: %v", err)
+	}
+	// Call with empty PEM bytes to skip using a cert
+	return c.FetchWithHostAndCert(getHost(parsedURL), rawURL, []byte{}, []byte{})
+}
+
+// FetchWithHostAndCert combines FetchWithHost and FetchWithCert.
+func (c *Client) FetchWithHostAndCert(host, rawURL string, certPEM, keyPEM []byte) (*Response, error) {
 
 	// URL checks
 	parsedURL, err := url.Parse(rawURL)
@@ -85,9 +110,21 @@ func (c *Client) FetchWithHost(host, rawURL string) (*Response, error) {
 		host = net.JoinHostPort(host, "1965")
 	}
 
+	// Build tls.Certificate
+	var cert tls.Certificate
+	if len(certPEM) == 0 && len(keyPEM) == 0 {
+		// Cert bytes were intentionally left empty
+		cert = tls.Certificate{}
+	} else {
+		cert, err = tls.X509KeyPair(certPEM, keyPEM)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse cert/key PEM: %v", err)
+		}
+	}
+
 	res := Response{}
 
-	conn, err := c.connect(&res, host, parsedURL)
+	conn, err := c.connect(&res, host, parsedURL, cert)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to the server: %v", err)
 	}
@@ -111,23 +148,45 @@ func (c *Client) FetchWithHost(host, rawURL string) (*Response, error) {
 	return &res, nil
 }
 
-// Fetch a resource from a Gemini server with the default client.
+// Fetch a resource from a Gemini server with the given URL.
+// It assumes port 1965 if no port is specified.
 func Fetch(url string) (*Response, error) {
 	return DefaultClient.Fetch(url)
 }
 
-// FetchWithHost fetches a resource from a Gemini server at the given host, with the default client.
+// FetchWithCert fetches a resource from a Gemini server with the given URL.
+// It allows you to provide the bytes of a PEM encoded block for a client
+// certificate and its key. This allows you to make requests using client
+// certs.
+//
+// It assumes port 1965 if no port is specified.
+func FetchWithCert(url string, certPEM, keyPEM []byte) (*Response, error) {
+	return DefaultClient.FetchWithCert(url, certPEM, keyPEM)
+}
+
+// FetchWithHost fetches a resource from a Gemini server at the given host, with the given URL.
 // This can be used for proxying, where the URL host and actual server don't match.
+// It assumes the host is using port 1965 if no port number is provided.
 func FetchWithHost(host, url string) (*Response, error) {
 	return DefaultClient.FetchWithHost(host, url)
 }
 
-func (c *Client) connect(res *Response, host string, parsedURL *url.URL) (io.ReadWriteCloser, error) {
+// FetchWithHostAndCert combines FetchWithHost and FetchWithCert.
+func FetchWithHostAndCert(host, url string, certPEM, keyPEM []byte) (*Response, error) {
+	return DefaultClient.FetchWithHostAndCert(host, url, certPEM, keyPEM)
+}
+
+func (c *Client) connect(res *Response, host string, parsedURL *url.URL, clientCert tls.Certificate) (io.ReadWriteCloser, error) {
 	conf := &tls.Config{
 		MinVersion:         tls.VersionTLS12,
 		InsecureSkipVerify: true, // This must be set to allow self-signed certs
 	}
+	if clientCert.Certificate != nil {
+		// There is data, not an empty struct
+		conf.Certificates = append(conf.Certificates, clientCert)
+	}
 
+	// Support logging TLS keys for debugging - See PR #5
 	keylogfile := os.Getenv("SSLKEYLOGFILE")
 	if keylogfile != "" {
 		w, err := os.OpenFile(keylogfile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0600)
