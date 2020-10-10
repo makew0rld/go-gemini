@@ -87,7 +87,7 @@ func (c *Client) FetchWithCert(rawURL string, certPEM, keyPEM []byte) (*Response
 		return nil, fmt.Errorf("failed to parse URL: %v", err)
 	}
 	// Call with empty PEM bytes to skip using a cert
-	return c.FetchWithHostAndCert(getHost(parsedURL), rawURL, []byte{}, []byte{})
+	return c.FetchWithHostAndCert(getHost(parsedURL), rawURL, certPEM, keyPEM)
 }
 
 // FetchWithHostAndCert combines FetchWithHost and FetchWithCert.
