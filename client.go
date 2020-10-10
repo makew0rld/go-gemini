@@ -183,7 +183,7 @@ func (c *Client) connect(res *Response, host string, parsedURL *url.URL, clientC
 	}
 	if clientCert.Certificate != nil {
 		// There is data, not an empty struct
-		conf.Certificates = append(conf.Certificates, clientCert)
+		conf.Certificates = []tls.Certificate{clientCert}
 	}
 
 	// Support logging TLS keys for debugging - See PR #5
