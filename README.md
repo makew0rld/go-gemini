@@ -10,6 +10,8 @@ This version of the library was forked from [~yotam/go-gemini](https://git.sr.ht
 
 At the moment, this library focuses more on the client side of things, and support is not guaranteed. Please feel free to file issues though.
 
+This is mostly a personal library. You might want to check out [go-gemini (no relation)](https://sr.ht/~adnano/go-gemini) for more features.
+
 ## Improvements
 This fork of the library improves on the original in several ways, some listed above already.
 
