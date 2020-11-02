@@ -126,8 +126,8 @@ func TestGetHost(t *testing.T) {
 		{"[::1]:1965", "gemini://[::1]/test//"},
 		{"[::1]:123", "gemini://[::1]:123"},
 		{"[::1]:123", "gemini://[::1]:123/test//"},
-    // There's a dot at the end of the host since it absolute name which is returned by DNS
-    {"niedzwiedzinski.cyou.:20468", "gemini://niedzwiedzinski.cyou"},
+		// There's a dot at the end of the host since it absolute name which is returned by DNS
+		{"niedzwiedzinski.cyou.:20468", "gemini://niedzwiedzinski.cyou"},
 	}
 
 	for _, tc := range tests {
