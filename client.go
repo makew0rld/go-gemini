@@ -9,6 +9,7 @@ import (
 	"net"
 	"net/url"
 	"os"
+  "sort"
 	"strconv"
 	"strings"
 	"time"
@@ -52,7 +53,13 @@ var DefaultClient = &Client{Timeout: 15 * time.Second}
 func getHost(parsedURL *url.URL) string {
 	host := parsedURL.Host
 	if parsedURL.Port() == "" {
-		host = net.JoinHostPort(parsedURL.Hostname(), "1965")
+    port, target, err := checkSRV(host)
+    if err != nil {
+      port = "1965"
+      target = parsedURL.Hostname()
+    }
+
+		host = net.JoinHostPort(target, port)
 	}
 	return host
 }
@@ -106,8 +113,14 @@ func (c *Client) FetchWithHostAndCert(host, rawURL string, certPEM, keyPEM []byt
 	// Add port to host if needed
 	_, _, err = net.SplitHostPort(host)
 	if err != nil {
+    port, target, err := checkSRV(host)
+    if err != nil {
+      port = "1965"
+      target = host
+    }
+
 		// Error likely means there's no port in the host
-		host = net.JoinHostPort(host, "1965")
+		host = net.JoinHostPort(target, port)
 	}
 
 	// Build tls.Certificate
@@ -297,4 +310,17 @@ func readHeader(conn io.Reader) ([]byte, error) {
 			return line[:len(line)-len(delim)], nil
 		}
 	}
+}
+
+func checkSRV(host string) (string, string, error) {
+  _, srvs, err := net.LookupSRV("gemini", "tcp", host);
+  if err != nil {
+    return "", "", err;
+  }
+
+  sort.Slice(srvs, func(a, b int) bool {
+    return srvs[a].Priority < srvs[b].Priority
+  })
+
+  return strconv.FormatInt(int64(srvs[0].Port), 10), srvs[0].Target, nil
 }
