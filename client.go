@@ -314,7 +314,7 @@ func readHeader(conn io.Reader) ([]byte, error) {
 
 func checkSRV(host string) (string, string, error) {
 	_, srvs, err := net.LookupSRV("gemini", "tcp", host)
-	if err != nil {
+	if err != nil || len(srvs) == 0 {
 		return "", "", err
 	}
 
