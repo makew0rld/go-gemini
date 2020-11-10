@@ -212,8 +212,8 @@ func (c *Client) connect(res *Response, host string, parsedURL *url.URL, clientC
 	if !c.NoHostnameCheck {
 		// Cert hostname has to match connection host, not request host
 		hostname, _, _ := net.SplitHostPort(host)
-		if cert.Subject.CommonName != hostname && cert.VerifyHostname(hostname) != nil {
-			return nil, fmt.Errorf("hostname does not verify")
+		if err := verifyHostname(cert, hostname); err != nil {
+			return nil, fmt.Errorf("hostname does not verify: %v", err)
 		}
 	}
 	// Verify expiry

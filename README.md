@@ -30,4 +30,4 @@ This library only works with Go 1.12 and higher.
 Use the latest tag, and not the latest commit, if you want relatively reliable code. Code in the latest master might be untested/buggy.
 
 ## License
-This library is under the ISC License, see the [LICENSE](./LICENSE) file for details.
+This library is under the ISC License, see the [LICENSE](./LICENSE) file for details. Portions of this library's code are taken from Go, and are under a different license, which can be found in [LICENSE-GO](./LICENSE-GO). Those files are marked accordingly in their comments.
