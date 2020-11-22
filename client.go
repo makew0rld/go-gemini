@@ -149,7 +149,7 @@ func (c *Client) FetchWithHostAndCert(host, rawURL string, certPEM, keyPEM []byt
 
 	// Send request
 
-	if c.ReadTimeout == 0 {
+	if c.ReadTimeout == 0 && c.ConnectTimeout != 0 {
 		// No r/w timeout, so a timeout for sending the request must be set
 		conn.SetDeadline(start.Add(c.ConnectTimeout))
 	}
@@ -158,14 +158,14 @@ func (c *Client) FetchWithHostAndCert(host, rawURL string, certPEM, keyPEM []byt
 		conn.Close()
 		return nil, err
 	}
-	if c.ReadTimeout == 0 {
+	if c.ReadTimeout == 0 && c.ConnectTimeout != 0 {
 		// Undo deadline
 		conn.SetDeadline(time.Time{})
 	}
 
 	// Get header
 
-	if c.ReadTimeout == 0 {
+	if c.ReadTimeout == 0 && c.ConnectTimeout != 0 {
 		// No r/w timeout, so a timeout for getting the header
 		conn.SetDeadline(start.Add(c.ConnectTimeout))
 	}
@@ -174,7 +174,7 @@ func (c *Client) FetchWithHostAndCert(host, rawURL string, certPEM, keyPEM []byt
 		conn.Close()
 		return nil, err
 	}
-	if c.ReadTimeout == 0 {
+	if c.ReadTimeout == 0 && c.ConnectTimeout != 0 {
 		// Undo deadline
 		conn.SetDeadline(time.Time{})
 	}
