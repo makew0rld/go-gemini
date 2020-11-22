@@ -45,13 +45,21 @@ type Client struct {
 	// that is out of spec is returned.
 	AllowInvalidStatuses bool
 
-	// Timeout is equivalent to the Timeout field in net.Dialer.
-	// It's the time it takes to form the initial connection.
+	// ConnectTimeout is equivalent to the Timeout field in net.Dialer.
+	// It's the max amount of time allowed for the initial connection/handshake.
 	// The timeout of the DefaultClient is 15 seconds.
-	Timeout time.Duration
+	ConnectTimeout time.Duration
+
+	// ReadTimeout is the max amount of time reading to a server can take.
+	// This should not be set if you want to support streams.
+	// It is equivalent to net.Conn.SetDeadline, see that func for more documentation.
+	//
+	// For example, if this is set to 30 seconds, then no more reading from the connection
+	// can happen 30 seconds after the initial handshake.
+	ReadTimeout time.Duration
 }
 
-var DefaultClient = &Client{Timeout: 15 * time.Second}
+var DefaultClient = &Client{ConnectTimeout: 15 * time.Second}
 
 func getHost(parsedURL *url.URL) string {
 	host := parsedURL.Host
@@ -200,13 +208,14 @@ func (c *Client) connect(res *Response, host string, parsedURL *url.URL, clientC
 		}
 	}
 
-	conn, err := tls.Dial("tcp", host, conf)
+	// Dialer timeout for handshake
+	conn, err := tls.DialWithDialer(&net.Dialer{Timeout: c.ConnectTimeout}, "tcp", host, conf)
 	if err != nil {
 		return conn, err
 	}
 
-	if c.Timeout != 0 {
-		conn.SetDeadline(time.Now().Add(c.Timeout))
+	if c.ReadTimeout != 0 {
+		conn.SetDeadline(time.Now().Add(c.ReadTimeout))
 	}
 
 	cert := conn.ConnectionState().PeerCertificates[0]
