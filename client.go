@@ -32,15 +32,19 @@ type header struct {
 type Client struct {
 	// NoTimeCheck allows connections with expired or future certs if set to true.
 	NoTimeCheck bool
+
 	// NoHostnameCheck allows connections when the cert doesn't match the
 	// requested hostname or IP.
 	NoHostnameCheck bool
+
 	// Insecure disables all TLS-based checks, use with caution.
 	// It overrides all the variables above.
 	Insecure bool
+
 	// AllowInvalidStatuses means the client won't raise an error if a status
 	// that is out of spec is returned.
 	AllowInvalidStatuses bool
+
 	// Timeout is equivalent to the Timeout field in net.Dialer.
 	// It's the time it takes to form the initial connection.
 	// The timeout of the DefaultClient is 15 seconds.
@@ -196,9 +200,13 @@ func (c *Client) connect(res *Response, host string, parsedURL *url.URL, clientC
 		}
 	}
 
-	conn, err := tls.DialWithDialer(&net.Dialer{Timeout: c.Timeout}, "tcp", host, conf)
+	conn, err := tls.Dial("tcp", host, conf)
 	if err != nil {
 		return conn, err
+	}
+
+	if c.Timeout != 0 {
+		conn.SetDeadline(time.Now().Add(c.Timeout))
 	}
 
 	cert := conn.ConnectionState().PeerCertificates[0]
