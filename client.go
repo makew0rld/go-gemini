@@ -48,6 +48,9 @@ type Client struct {
 	// ConnectTimeout is equivalent to the Timeout field in net.Dialer.
 	// It's the max amount of time allowed for the initial connection/handshake.
 	// The timeout of the DefaultClient is 15 seconds.
+	//
+	// If ReadTimeout is not set, then this value is also used to time out on getting
+	// the header after the connection is made.
 	ConnectTimeout time.Duration
 
 	// ReadTimeout is the max amount of time reading to a server can take.
@@ -136,22 +139,47 @@ func (c *Client) FetchWithHostAndCert(host, rawURL string, certPEM, keyPEM []byt
 
 	res := Response{}
 
+	// Connect
+
+	start := time.Now()
 	conn, err := c.connect(&res, host, parsedURL, cert)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to the server: %v", err)
 	}
 
+	// Send request
+
+	if c.ReadTimeout == 0 {
+		// No r/w timeout, so a timeout for sending the request must be set
+		conn.SetDeadline(start.Add(c.ConnectTimeout))
+	}
 	err = sendRequest(conn, parsedURL.String())
 	if err != nil {
 		conn.Close()
 		return nil, err
 	}
+	if c.ReadTimeout == 0 {
+		// Undo deadline
+		conn.SetDeadline(time.Time{})
+	}
 
+	// Get header
+
+	if c.ReadTimeout == 0 {
+		// No r/w timeout, so a timeout for getting the header
+		conn.SetDeadline(start.Add(c.ConnectTimeout))
+	}
 	err = getResponse(&res, conn)
 	if err != nil {
 		conn.Close()
 		return nil, err
 	}
+	if c.ReadTimeout == 0 {
+		// Undo deadline
+		conn.SetDeadline(time.Time{})
+	}
+
+	// Check status code
 	if !c.AllowInvalidStatuses && !IsStatusValid(res.Status) {
 		conn.Close()
 		return nil, fmt.Errorf("invalid status code: %v", res.Status)
@@ -188,7 +216,7 @@ func FetchWithHostAndCert(host, url string, certPEM, keyPEM []byte) (*Response, 
 	return DefaultClient.FetchWithHostAndCert(host, url, certPEM, keyPEM)
 }
 
-func (c *Client) connect(res *Response, host string, parsedURL *url.URL, clientCert tls.Certificate) (io.ReadWriteCloser, error) {
+func (c *Client) connect(res *Response, host string, parsedURL *url.URL, clientCert tls.Certificate) (net.Conn, error) {
 	conf := &tls.Config{
 		MinVersion:         tls.VersionTLS12,
 		InsecureSkipVerify: true, // This must be set to allow self-signed certs
