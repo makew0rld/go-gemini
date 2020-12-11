@@ -1,14 +1,14 @@
 # go-gemini
 
-go-gemini is a library that provides an easy interface to create client and servers that speak the [Gemini protocol](https://gemini.circumlunar.space/).
+go-gemini is a library that provides an easy interface to create client ~~and servers~~ that speak the [Gemini protocol](https://gemini.circumlunar.space/).
 
 **Spec version supported:** v0.14.3, November 29th 2020
 
 This version of the library was forked from [~yotam/go-gemini](https://git.sr.ht/~yotam/go-gemini/) to add additional features, as well as update it to support newer specs. At the time of forking, it had not seen any new commit for 5 months, and was based on v0.9.2. If there are any future upstream updates, I will make an effort to include them.
 
-At the moment, this library focuses more on the client side of things, and support is not guaranteed. Please feel free to file issues though.
+**The server part of this library has been removed.** I don't use it and don't want to maintain it.
 
-This is mostly a personal library. You might want to check out [go-gemini (no relation)](https://sr.ht/~adnano/go-gemini) for more features.
+This is mostly a personal library. You might want to check out [go-gemini](https://sr.ht/~adnano/go-gemini) (no relation) for more features.
 
 ## Improvements
 This fork of the library improves on the original in several ways, some listed above already.
