@@ -41,7 +41,7 @@ func TestGetResponse(t *testing.T) {
 		file     string
 		expected Response
 	}{
-		{"resources/tests/simple_response", Response{20, "text/gemini", ioutil.NopCloser(strings.NewReader("This is the content of the page\r\n")), nil}},
+		{"resources/tests/simple_response", Response{20, "text/gemini", ioutil.NopCloser(strings.NewReader("This is the content of the page\r\n")), nil, nil}},
 	}
 
 	for _, tc := range tests {

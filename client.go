@@ -22,6 +22,7 @@ type Response struct {
 	// Cert is the client or server cert received in the connection.
 	// If you are the client, then it is the server cert, and vice versa.
 	Cert *x509.Certificate
+	conn net.Conn
 }
 
 type header struct {
@@ -70,6 +71,16 @@ func getHost(parsedURL *url.URL) string {
 		host = net.JoinHostPort(parsedURL.Hostname(), "1965")
 	}
 	return host
+}
+
+// SetReadTimeout changes the read timeout after the connection has been made.
+// You can set it to 0 or less to disable the timeout. Otherwise, the duration
+// is relative to the time the function was called.
+func (r *Response) SetReadTimeout(d time.Duration) error {
+	if d <= 0 {
+		return r.conn.SetDeadline(time.Time{})
+	}
+	return r.conn.SetDeadline(time.Now().Add(d))
 }
 
 // Fetch a resource from a Gemini server with the given URL.
@@ -238,6 +249,7 @@ func (c *Client) connect(res *Response, host string, parsedURL *url.URL, clientC
 
 	// Dialer timeout for handshake
 	conn, err := tls.DialWithDialer(&net.Dialer{Timeout: c.ConnectTimeout}, "tcp", host, conf)
+	res.conn = conn
 	if err != nil {
 		return conn, err
 	}
