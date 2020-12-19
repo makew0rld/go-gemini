@@ -37,13 +37,6 @@ const (
 	StatusClientCertificateRequired = 60
 	StatusCertificateNotAuthorised  = 61
 	StatusCertificateNotValid       = 62
-
-	StatusDeprecatedSuccessEndOfClientCertificateSession = 21
-	StatusDeprecatedTransientCertificateRequested        = 61
-	StatusDeprecatedAuthorisedCertificateRequired        = 62
-	StatusDeprecatedCertificateNotAccepted               = 63
-	StatusDeprecatedFutureCertificateRejected            = 64
-	StatusDeprecatedExpiredCertificateRejected           = 65
 )
 
 // All the statuses between 10 and 62 that are invalid
