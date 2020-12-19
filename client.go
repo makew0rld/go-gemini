@@ -12,17 +12,62 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"golang.org/x/net/idna"
 )
+
+func punycodeHost(host string) (string, error) {
+	hostname, port, err := net.SplitHostPort(host)
+	if err != nil {
+		// Likely means no port
+		hostname = host
+		port = ""
+	}
+
+	if net.ParseIP(hostname) != nil {
+		// Hostname is IP address, not domain
+		return host, nil
+	}
+	pc, err := idna.ToASCII(hostname)
+	if err != nil {
+		return host, err
+	}
+	if port == "" {
+		return pc, nil
+	}
+	return net.JoinHostPort(pc, port), nil
+}
+
+func punycodeHostFromURL(u string) (string, error) {
+	parsed, err := url.Parse(u)
+	if err != nil {
+		return "", err
+	}
+	return punycodeHost(parsed.Host)
+}
+
+// GetPunycodeURL takes a full URL that potentially has Unicode in the
+// domain name, and returns a URL with the domain punycoded.
+func GetPunycodeURL(u string) (string, error) {
+	parsed, err := url.Parse(u)
+	if err != nil {
+		return "", nil
+	}
+	host, err := punycodeHostFromURL(u)
+	if err != nil {
+		return "", err
+	}
+	parsed.Host = host
+	return parsed.String(), nil
+}
 
 // Response represents the response from a Gemini server.
 type Response struct {
 	Status int
 	Meta   string
 	Body   io.ReadCloser
-	// Cert is the client or server cert received in the connection.
-	// If you are the client, then it is the server cert, and vice versa.
-	Cert *x509.Certificate
-	conn net.Conn
+	Cert   *x509.Certificate
+	conn   net.Conn
 }
 
 type header struct {
@@ -65,8 +110,10 @@ type Client struct {
 
 var DefaultClient = &Client{ConnectTimeout: 15 * time.Second}
 
+// getHost returns a full host for the given URL, always including a port.
+// It also punycodes the host, in case it contains Unicode.
 func getHost(parsedURL *url.URL) string {
-	host := parsedURL.Host
+	host, _ := punycodeHostFromURL(parsedURL.String())
 	if parsedURL.Port() == "" {
 		host = net.JoinHostPort(parsedURL.Hostname(), "1965")
 	}
@@ -83,12 +130,14 @@ func (r *Response) SetReadTimeout(d time.Duration) error {
 	return r.conn.SetDeadline(time.Now().Add(d))
 }
 
+// TODO: apply punycoding to hosts
+
 // Fetch a resource from a Gemini server with the given URL.
 // It assumes port 1965 if no port is specified.
 func (c *Client) Fetch(rawURL string) (*Response, error) {
 	parsedURL, err := url.Parse(rawURL)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse URL: %v", err)
+		return nil, fmt.Errorf("failed to parse URL: %w", err)
 	}
 	return c.FetchWithHost(getHost(parsedURL), rawURL)
 }
@@ -110,7 +159,7 @@ func (c *Client) FetchWithHost(host, rawURL string) (*Response, error) {
 func (c *Client) FetchWithCert(rawURL string, certPEM, keyPEM []byte) (*Response, error) {
 	parsedURL, err := url.Parse(rawURL)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse URL: %v", err)
+		return nil, fmt.Errorf("failed to parse URL: %w", err)
 	}
 	// Call with empty PEM bytes to skip using a cert
 	return c.FetchWithHostAndCert(getHost(parsedURL), rawURL, certPEM, keyPEM)
@@ -118,13 +167,13 @@ func (c *Client) FetchWithCert(rawURL string, certPEM, keyPEM []byte) (*Response
 
 // FetchWithHostAndCert combines FetchWithHost and FetchWithCert.
 func (c *Client) FetchWithHostAndCert(host, rawURL string, certPEM, keyPEM []byte) (*Response, error) {
-
-	// URL checks
-	parsedURL, err := url.Parse(rawURL)
+	u, err := GetPunycodeURL(rawURL)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse URL: %v", err)
+		return nil, fmt.Errorf("error when punycoding URL: %w", err)
 	}
-	if len(rawURL) > URLMaxLength {
+	parsedURL, _ := url.Parse(u)
+
+	if len(u) > URLMaxLength {
 		// Out of spec
 		return nil, fmt.Errorf("url is too long")
 	}
@@ -135,6 +184,11 @@ func (c *Client) FetchWithHostAndCert(host, rawURL string, certPEM, keyPEM []byt
 		// Error likely means there's no port in the host
 		host = net.JoinHostPort(host, "1965")
 	}
+	ogHost := host
+	host, err = punycodeHost(host)
+	if err != nil {
+		return nil, fmt.Errorf("failed to punycode host %s: %w", ogHost, err)
+	}
 
 	// Build tls.Certificate
 	var cert tls.Certificate
@@ -144,7 +198,7 @@ func (c *Client) FetchWithHostAndCert(host, rawURL string, certPEM, keyPEM []byt
 	} else {
 		cert, err = tls.X509KeyPair(certPEM, keyPEM)
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse cert/key PEM: %v", err)
+			return nil, fmt.Errorf("failed to parse cert/key PEM: %w", err)
 		}
 	}
 
@@ -155,7 +209,7 @@ func (c *Client) FetchWithHostAndCert(host, rawURL string, certPEM, keyPEM []byt
 	start := time.Now()
 	conn, err := c.connect(&res, host, parsedURL, cert)
 	if err != nil {
-		return nil, fmt.Errorf("failed to connect to the server: %v", err)
+		return nil, fmt.Errorf("failed to connect to the server: %w", err)
 	}
 
 	// Send request
@@ -164,7 +218,7 @@ func (c *Client) FetchWithHostAndCert(host, rawURL string, certPEM, keyPEM []byt
 		// No r/w timeout, so a timeout for sending the request must be set
 		conn.SetDeadline(start.Add(c.ConnectTimeout))
 	}
-	err = sendRequest(conn, parsedURL.String())
+	err = sendRequest(conn, u)
 	if err != nil {
 		conn.Close()
 		return nil, err
@@ -269,8 +323,18 @@ func (c *Client) connect(res *Response, host string, parsedURL *url.URL, clientC
 	if !c.NoHostnameCheck {
 		// Cert hostname has to match connection host, not request host
 		hostname, _, _ := net.SplitHostPort(host)
+
 		if err := verifyHostname(cert, hostname); err != nil {
-			return nil, fmt.Errorf("hostname does not verify: %v", err)
+			// Try with Unicode version
+			uniHost, uniErr := idna.ToUnicode(hostname)
+			err2 := verifyHostname(cert, uniHost)
+			if uniErr != nil {
+				return nil, fmt.Errorf("punycoded hostname does not verify and could not be converted to Unicode: %w", err)
+			}
+			if err2 != nil {
+				return nil, fmt.Errorf("hostname does not verify: %w", err2)
+			}
+			return nil, fmt.Errorf("hostname does not verify: %w", err)
 		}
 	}
 	// Verify expiry
@@ -288,7 +352,7 @@ func (c *Client) connect(res *Response, host string, parsedURL *url.URL, clientC
 func sendRequest(conn io.Writer, requestURL string) error {
 	_, err := fmt.Fprintf(conn, "%s\r\n", requestURL)
 	if err != nil {
-		return fmt.Errorf("could not send request to the server: %v", err)
+		return fmt.Errorf("could not send request to the server: %w", err)
 	}
 	return nil
 }
@@ -297,7 +361,7 @@ func getResponse(res *Response, conn io.ReadCloser) error {
 	header, err := getHeader(conn)
 	if err != nil {
 		conn.Close()
-		return fmt.Errorf("failed to get header: %v", err)
+		return fmt.Errorf("failed to get header: %w", err)
 	}
 
 	res.Status = header.status
@@ -309,7 +373,7 @@ func getResponse(res *Response, conn io.ReadCloser) error {
 func getHeader(conn io.Reader) (header, error) {
 	line, err := readHeader(conn)
 	if err != nil {
-		return header{}, fmt.Errorf("failed to read header: %v", err)
+		return header{}, fmt.Errorf("failed to read header: %w", err)
 	}
 
 	fields := strings.Fields(string(line))
@@ -319,7 +383,7 @@ func getHeader(conn io.Reader) (header, error) {
 
 	status, err := strconv.Atoi(fields[0])
 	if err != nil {
-		return header{}, fmt.Errorf("unexpected status value %v: %v", fields[0], err)
+		return header{}, fmt.Errorf("unexpected status value %v: %w", fields[0], err)
 	}
 
 	var meta string

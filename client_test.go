@@ -135,3 +135,29 @@ func TestGetHost(t *testing.T) {
 		}
 	}
 }
+
+func TestGetPunycodeURL(t *testing.T) {
+	tests := []struct {
+		expected string
+		url      string
+	}{
+		{"gemini://example.com:1965", "gemini://example.com:1965"},
+		{"gemini://example.com", "gemini://example.com"},
+		{"gemini://example.com/test//", "gemini://example.com/test//"},
+		{"gemini://xn--gmeaux-bva.bortzmeyer.org/", "gemini://gémeaux.bortzmeyer.org/"},
+		{"gemini://1.2.3.4/", "gemini://1.2.3.4/"},
+		{"gemini://1.2.3.4:33/", "gemini://1.2.3.4:33/"},
+		{"gemini://[::1]:1234", "gemini://[::1]:1234"},
+		{"gemini://xn--gmeaux-bva.bortzmeyer.org:1965/", "gemini://gémeaux.bortzmeyer.org:1965/"},
+	}
+
+	for _, tc := range tests {
+		u, err := GetPunycodeURL(tc.url)
+		if err != nil {
+			t.Errorf("Got error %v for URL %s , expected %s", err, tc.url, tc.expected)
+		}
+		if tc.expected != u {
+			t.Errorf("Got %s but expected %s for URL %s", u, tc.expected, tc.url)
+		}
+	}
+}
