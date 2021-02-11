@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"golang.org/x/net/proxy"
 	"golang.org/x/net/idna"
 )
 
@@ -302,7 +303,7 @@ func (c *Client) connect(res *Response, host string, parsedURL *url.URL, clientC
 	}
 
 	// Dialer timeout for handshake
-	dialer := &net.Dialer{Timeout: c.ConnectTimeout}
+	dialer := proxy.FromEnvironmentUsing(&net.Dialer{Timeout: c.ConnectTimeout})
 	conn_notls, err := dialer.Dial("tcp", host)
 	if err != nil {
 		return conn_notls, err
