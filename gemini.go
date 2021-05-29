@@ -39,6 +39,39 @@ const (
 	StatusCertificateNotValid       = 62
 )
 
+var statusText = map[int]string{
+	StatusInput:          "Input",
+	StatusSensitiveInput: "Sensitive Input",
+
+	StatusSuccess: "Success",
+
+	// StatusRedirect:       "Redirect - Temporary"
+	StatusRedirectTemporary: "Redirect - Temporary",
+	StatusRedirectPermanent: "Redirect - Permanent",
+
+	StatusTemporaryFailure: "Temporary Failure",
+	StatusUnavailable:      "Server Unavailable",
+	StatusCGIError:         "CGI Error",
+	StatusProxyError:       "Proxy Error",
+	StatusSlowDown:         "Slow Down",
+
+	StatusPermanentFailure:    "Permanent Failure",
+	StatusNotFound:            "Not Found",
+	StatusGone:                "Gone",
+	StatusProxyRequestRefused: "Proxy Request Refused",
+	StatusBadRequest:          "Bad Request",
+
+	StatusClientCertificateRequired: "Client Certificate Required",
+	StatusCertificateNotAuthorised:  "Certificate Not Authorised",
+	StatusCertificateNotValid:       "Certificate Not Valid",
+}
+
+// StatusText returns a text for the Gemini status code. It returns the empty
+// string if the code is unknown.
+func StatusText(code int) string {
+	return statusText[code]
+}
+
 // All the statuses between 10 and 62 that are invalid
 var invalidStatuses = []int{
 	12, 13, 14, 15, 16, 17, 18, 19,
