@@ -39,13 +39,37 @@ const (
 	StatusCertificateNotValid       = 62
 )
 
-// All the statuses between 10 and 62 that are invalid
-var invalidStatuses = []int{
-	12, 13, 14, 15, 16, 17, 18, 19,
-	21, 22, 23, 24, 25, 26, 27, 28, 29,
-	32, 33, 34, 35, 36, 37, 38, 39,
-	45, 46, 47, 48, 49,
-	54, 55, 56, 57, 58,
+var statusText = map[int]string{
+	StatusInput:          "Input",
+	StatusSensitiveInput: "Sensitive Input",
+
+	StatusSuccess: "Success",
+
+	// StatusRedirect:       "Redirect - Temporary"
+	StatusRedirectTemporary: "Redirect - Temporary",
+	StatusRedirectPermanent: "Redirect - Permanent",
+
+	StatusTemporaryFailure: "Temporary Failure",
+	StatusUnavailable:      "Server Unavailable",
+	StatusCGIError:         "CGI Error",
+	StatusProxyError:       "Proxy Error",
+	StatusSlowDown:         "Slow Down",
+
+	StatusPermanentFailure:    "Permanent Failure",
+	StatusNotFound:            "Not Found",
+	StatusGone:                "Gone",
+	StatusProxyRequestRefused: "Proxy Request Refused",
+	StatusBadRequest:          "Bad Request",
+
+	StatusClientCertificateRequired: "Client Certificate Required",
+	StatusCertificateNotAuthorised:  "Certificate Not Authorised",
+	StatusCertificateNotValid:       "Certificate Not Valid",
+}
+
+// StatusText returns a text for the Gemini status code. It returns the empty
+// string if the code is unknown.
+func StatusText(code int) string {
+	return statusText[code]
 }
 
 // SimplifyStatus simplify the response status by omiting the detailed second digit of the status code.
@@ -55,15 +79,8 @@ func SimplifyStatus(status int) int {
 
 // IsStatusValid checks whether an int status is covered by the spec.
 func IsStatusValid(status int) bool {
-	if status < 10 || status > 62 {
-		return false
-	}
-	for _, v := range invalidStatuses {
-		if status == v {
-			return false
-		}
-	}
-	return true
+	_, found := statusText[status]
+	return found
 }
 
 // QueryEscape provides URL query escaping in a way that follows the Gemini spec.
