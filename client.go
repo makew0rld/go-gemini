@@ -2,6 +2,7 @@ package gemini
 
 import (
 	"bytes"
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
@@ -14,6 +15,7 @@ import (
 	"time"
 
 	"golang.org/x/net/idna"
+	"nhooyr.io/websocket"
 )
 
 func punycodeHost(host string) (string, error) {
@@ -283,6 +285,7 @@ func FetchWithHostAndCert(host, url string, certPEM, keyPEM []byte) (*Response, 
 
 func (c *Client) connect(res *Response, host string, parsedURL *url.URL, clientCert tls.Certificate) (net.Conn, error) {
 	conf := &tls.Config{
+		ServerName:         parsedURL.Hostname(), // Needed for SNI with tls.Client
 		MinVersion:         tls.VersionTLS12,
 		InsecureSkipVerify: true, // This must be set to allow self-signed certs
 	}
@@ -301,10 +304,25 @@ func (c *Client) connect(res *Response, host string, parsedURL *url.URL, clientC
 		}
 	}
 
-	// Dialer timeout for handshake
-	conn, err := tls.DialWithDialer(&net.Dialer{Timeout: c.ConnectTimeout}, "tcp", host, conf)
-	res.conn = conn
+	var socket net.Conn
+	var err error
+
+	ctx, _ := context.WithTimeout(context.Background(), c.ConnectTimeout)
+
+	if wsProxy := os.Getenv("WEBSOCKET_PROXY"); wsProxy != "" {
+		socket, err = dialWebSocketProxy(ctx, wsProxy, host)
+	} else {
+		socket, err = (&net.Dialer{}).DialContext(ctx, "tcp", host)
+	}
+
 	if err != nil {
+		return nil, err
+	}
+
+	conn := tls.Client(socket, conf)
+	res.conn = conn
+
+	if err = conn.Handshake(); err != nil {
 		return conn, err
 	}
 
@@ -347,6 +365,24 @@ func (c *Client) connect(res *Response, host string, parsedURL *url.URL, clientC
 	}
 
 	return conn, nil
+}
+
+// Mainly used to support connections when running inside a browser.
+// But hey, if you want to browse Gemini with a WS proxy elsewhere,
+// I guess, go ahead!
+func dialWebSocketProxy(ctx context.Context, baseURL string, dest string) (net.Conn, error) {
+	proxyURL, err := url.Parse(baseURL)
+	if err != nil {
+		return nil, fmt.Errorf("can't parse websocket proxy URL: %v", err)
+	}
+
+	if !strings.HasSuffix(proxyURL.Path, "/") {
+		proxyURL.Path += "/"
+	}
+	proxyURL.Path += url.PathEscape(dest)
+
+	ws, _, err := websocket.Dial(ctx, proxyURL.String(), nil)
+	return websocket.NetConn(ctx, ws, websocket.MessageBinary), err
 }
 
 func sendRequest(conn io.Writer, requestURL string) error {
