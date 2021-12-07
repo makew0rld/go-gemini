@@ -137,7 +137,7 @@ func (r *Response) SetReadTimeout(d time.Duration) error {
 func (c *Client) Fetch(rawURL string) (*Response, error) {
 	parsedURL, err := url.Parse(rawURL)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse URL: %v", err)
+		return nil, fmt.Errorf("failed to parse URL: %w", err)
 	}
 	return c.FetchWithHost(getHost(parsedURL), rawURL)
 }
@@ -159,7 +159,7 @@ func (c *Client) FetchWithHost(host, rawURL string) (*Response, error) {
 func (c *Client) FetchWithCert(rawURL string, certPEM, keyPEM []byte) (*Response, error) {
 	parsedURL, err := url.Parse(rawURL)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse URL: %v", err)
+		return nil, fmt.Errorf("failed to parse URL: %w", err)
 	}
 	// Call with empty PEM bytes to skip using a cert
 	return c.FetchWithHostAndCert(getHost(parsedURL), rawURL, certPEM, keyPEM)
@@ -169,7 +169,7 @@ func (c *Client) FetchWithCert(rawURL string, certPEM, keyPEM []byte) (*Response
 func (c *Client) FetchWithHostAndCert(host, rawURL string, certPEM, keyPEM []byte) (*Response, error) {
 	u, err := GetPunycodeURL(rawURL)
 	if err != nil {
-		return nil, fmt.Errorf("error when punycoding URL: %v", err)
+		return nil, fmt.Errorf("error when punycoding URL: %w", err)
 	}
 	parsedURL, _ := url.Parse(u)
 
@@ -187,7 +187,7 @@ func (c *Client) FetchWithHostAndCert(host, rawURL string, certPEM, keyPEM []byt
 	ogHost := host
 	host, err = punycodeHost(host)
 	if err != nil {
-		return nil, fmt.Errorf("failed to punycode host %s: %v", ogHost, err)
+		return nil, fmt.Errorf("failed to punycode host %s: %w", ogHost, err)
 	}
 
 	// Build tls.Certificate
@@ -198,7 +198,7 @@ func (c *Client) FetchWithHostAndCert(host, rawURL string, certPEM, keyPEM []byt
 	} else {
 		cert, err = tls.X509KeyPair(certPEM, keyPEM)
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse cert/key PEM: %v", err)
+			return nil, fmt.Errorf("failed to parse cert/key PEM: %w", err)
 		}
 	}
 
@@ -209,7 +209,7 @@ func (c *Client) FetchWithHostAndCert(host, rawURL string, certPEM, keyPEM []byt
 	start := time.Now()
 	conn, err := c.connect(&res, host, parsedURL, cert)
 	if err != nil {
-		return nil, fmt.Errorf("failed to connect to the server: %v", err)
+		return nil, fmt.Errorf("failed to connect to the server: %w", err)
 	}
 
 	// Send request
@@ -329,12 +329,12 @@ func (c *Client) connect(res *Response, host string, parsedURL *url.URL, clientC
 			uniHost, uniErr := idna.ToUnicode(hostname)
 			err2 := verifyHostname(cert, uniHost)
 			if uniErr != nil {
-				return nil, fmt.Errorf("punycoded hostname does not verify and could not be converted to Unicode: %v", err)
+				return nil, fmt.Errorf("punycoded hostname does not verify and could not be converted to Unicode: %w", err)
 			}
 			if err2 != nil {
-				return nil, fmt.Errorf("hostname does not verify: %v", err2)
+				return nil, fmt.Errorf("hostname does not verify: %w", err2)
 			}
-			return nil, fmt.Errorf("hostname does not verify: %v", err)
+			return nil, fmt.Errorf("hostname does not verify: %w", err)
 		}
 	}
 	// Verify expiry
@@ -352,7 +352,7 @@ func (c *Client) connect(res *Response, host string, parsedURL *url.URL, clientC
 func sendRequest(conn io.Writer, requestURL string) error {
 	_, err := fmt.Fprintf(conn, "%s\r\n", requestURL)
 	if err != nil {
-		return fmt.Errorf("could not send request to the server: %v", err)
+		return fmt.Errorf("could not send request to the server: %w", err)
 	}
 	return nil
 }
@@ -361,7 +361,7 @@ func getResponse(res *Response, conn io.ReadCloser) error {
 	header, err := getHeader(conn)
 	if err != nil {
 		conn.Close()
-		return fmt.Errorf("failed to get header: %v", err)
+		return fmt.Errorf("failed to get header: %w", err)
 	}
 
 	res.Status = header.status
@@ -373,7 +373,7 @@ func getResponse(res *Response, conn io.ReadCloser) error {
 func getHeader(conn io.Reader) (header, error) {
 	line, err := readHeader(conn)
 	if err != nil {
-		return header{}, fmt.Errorf("failed to read header: %v", err)
+		return header{}, fmt.Errorf("failed to read header: %w", err)
 	}
 
 	fields := strings.Fields(string(line))
@@ -383,7 +383,7 @@ func getHeader(conn io.Reader) (header, error) {
 
 	status, err := strconv.Atoi(fields[0])
 	if err != nil {
-		return header{}, fmt.Errorf("unexpected status value %v: %v", fields[0], err)
+		return header{}, fmt.Errorf("unexpected status value %v: %w", fields[0], err)
 	}
 
 	var meta string
