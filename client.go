@@ -87,9 +87,11 @@ type Client struct {
 	// It overrides all the variables above.
 	Insecure bool
 
-	// AllowInvalidStatuses means the client won't raise an error if a status
-	// that is out of spec is returned.
-	AllowInvalidStatuses bool
+	// AllowOutOfRangeStatuses means the client won't raise an error if a status
+	// that is out of range is returned.
+	// Use CleanStatus() to handle statuses that are in range but not specified in
+	// the spec.
+	AllowOutOfRangeStatuses bool
 
 	// ConnectTimeout is equivalent to the Timeout field in net.Dialer.
 	// It's the max amount of time allowed for the initial connection/handshake.
@@ -245,7 +247,7 @@ func (c *Client) FetchWithHostAndCert(host, rawURL string, certPEM, keyPEM []byt
 	}
 
 	// Check status code
-	if !c.AllowInvalidStatuses && !IsStatusValid(res.Status) {
+	if !c.AllowOutOfRangeStatuses && !StatusInRange(res.Status) {
 		conn.Close()
 		return nil, fmt.Errorf("invalid status code: %v", res.Status)
 	}

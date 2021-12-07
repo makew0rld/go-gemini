@@ -1,8 +1,10 @@
 # go-gemini
 
+[![Go Reference](https://pkg.go.dev/badge/github.com/makeworld-the-better-one/go-gemini.svg)](https://pkg.go.dev/github.com/makeworld-the-better-one/go-gemini)
+
 go-gemini is a library that provides an easy interface to create client ~~and servers~~ that speak the [Gemini protocol](https://gemini.circumlunar.space/).
 
-**Spec version supported:** v0.14.3, November 29th 2020
+**Spec version supported:** v0.16.0, November 14th 2021
 
 This version of the library was forked from [~yotam/go-gemini](https://git.sr.ht/~yotam/go-gemini/) to add additional features, as well as update it to support newer specs. At the time of forking, it had not seen any new commit for 5 months, and was based on v0.9.2. If there are any future upstream updates, I will make an effort to include them.
 
@@ -27,7 +29,7 @@ This fork of the library improves on the original in several ways, some listed a
 
 ## Notes
 
-This library only works with Go 1.12 and higher.
+This library only works with Go 1.15 and higher.
 
 If you want relatively reliable code, use the latest tag, not the latest commit. Code in the latest master might be untested/buggy. The API might change between tags since it is still v0.
 
