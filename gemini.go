@@ -72,15 +72,43 @@ func StatusText(code int) string {
 	return statusText[code]
 }
 
-// SimplifyStatus simplify the response status by omiting the detailed second digit of the status code.
+// SimplifyStatus simplify the response status by ommiting the detailed second digit of the status code.
 func SimplifyStatus(status int) int {
 	return (status / 10) * 10
 }
 
 // IsStatusValid checks whether an int status is covered by the spec.
+// Note that:
+//     A client SHOULD deal with undefined status codes
+//     between '10' and '69' per the default action of the initial digit.
 func IsStatusValid(status int) bool {
 	_, found := statusText[status]
 	return found
+}
+
+// StatusInRange returns true if the status has a valid first digit.
+// This means it can be handled even if it's not defined by the spec,
+// because it has a known category
+func StatusInRange(status int) bool {
+	if status < 10 || status > 69 {
+		return false
+	}
+	return true
+}
+
+// CleanStatus returns the status code as is, unless it's invalid but still in range
+// Then it returns the status code with the second digit zeroed. So 51 returns 51,
+// but 22 returns 20.
+//
+// This corresponds with the spec:
+//     A client SHOULD deal with undefined status codes
+//     between '10' and '69' per the default action of the initial digit.
+func CleanStatus(status int) int {
+	// All the functions come together!
+	if !IsStatusValid(status) && StatusInRange(status) {
+		return SimplifyStatus(status)
+	}
+	return status
 }
 
 // QueryEscape provides URL query escaping in a way that follows the Gemini spec.
