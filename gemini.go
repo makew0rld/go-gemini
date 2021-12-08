@@ -90,7 +90,7 @@ func IsStatusValid(status int) bool {
 // This means it can be handled even if it's not defined by the spec,
 // because it has a known category
 func StatusInRange(status int) bool {
-	if status < 10 && status > 69 {
+	if status < 10 || status > 69 {
 		return false
 	}
 	return true
