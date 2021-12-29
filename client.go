@@ -121,6 +121,9 @@ type Client struct {
 	// "example.com:1965".
 	//
 	// Any errors returned will prevent a connection from occurring.
+	//
+	// This is not "gemini proxying", aka the proxying functionality built in to
+	// the Gemini protocol. This is for proxying requests over TOR, or SOCKS5, etc.
 	Proxy func(dialer *net.Dialer, address string) (net.Conn, error)
 }
 
@@ -159,7 +162,7 @@ func (c *Client) Fetch(rawURL string) (*Response, error) {
 }
 
 // FetchWithHost fetches a resource from a Gemini server at the given host, with the given URL.
-// This can be used for proxying, where the URL host and actual server don't match.
+// This can be used for Gemini proxying, where the URL host and actual server don't match.
 // It assumes the host is using port 1965 if no port number is provided.
 func (c *Client) FetchWithHost(host, rawURL string) (*Response, error) {
 	// Call with empty PEM bytes to skip using a cert
