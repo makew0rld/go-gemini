@@ -108,6 +108,17 @@ type Client struct {
 	// For example, if this is set to 30 seconds, then no more reading from the connection
 	// can happen 30 seconds after the initial handshake.
 	ReadTimeout time.Duration
+
+	// Proxy is a function that returns an existing connection. The TLS client
+	// will use this as the underlying transport, instead of making a direct TCP
+	// connection.
+	//
+	// go-gemini requires setting a dialer on the underlying connection, to impose
+	// a timeout on making the initial connection. This dialer is provided as an
+	// argument to the proxy function.
+	//
+	// Any errors returned will prevent a connection from occurring.
+	Proxy func(dialer *net.Dialer) (net.Conn, error)
 }
 
 var DefaultClient = &Client{ConnectTimeout: 15 * time.Second}
@@ -303,11 +314,27 @@ func (c *Client) connect(res *Response, host string, parsedURL *url.URL, clientC
 		}
 	}
 
-	// Dialer timeout for handshake
-	conn, err := tls.DialWithDialer(&net.Dialer{Timeout: c.ConnectTimeout}, "tcp", host, conf)
-	res.conn = conn
-	if err != nil {
-		return conn, err
+	var conn *tls.Conn
+	var err error
+	if c.Proxy == nil {
+		// Dialer timeout for handshake
+		conn, err = tls.DialWithDialer(&net.Dialer{Timeout: c.ConnectTimeout}, "tcp", host, conf)
+		res.conn = conn
+		if err != nil {
+			return conn, err
+		}
+	} else {
+		// Use proxy
+		proxyConn, err := c.Proxy(&net.Dialer{Timeout: c.ConnectTimeout})
+		if err != nil {
+			return nil, err
+		}
+		conn = tls.Client(proxyConn, conf)
+		// Make handshake manually to start connection, so later call to
+		// conn.ConnectionState() works
+		if err := conn.Handshake(); err != nil {
+			return nil, err
+		}
 	}
 
 	if c.ReadTimeout != 0 {
