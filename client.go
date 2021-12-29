@@ -117,8 +117,11 @@ type Client struct {
 	// a timeout on making the initial connection. This dialer is provided as an
 	// argument to the proxy function.
 	//
+	// The other argument provided is the address being connected to. For example
+	// "example.com:1965".
+	//
 	// Any errors returned will prevent a connection from occurring.
-	Proxy func(dialer *net.Dialer) (net.Conn, error)
+	Proxy func(dialer *net.Dialer, address string) (net.Conn, error)
 }
 
 var DefaultClient = &Client{ConnectTimeout: 15 * time.Second}
@@ -325,7 +328,7 @@ func (c *Client) connect(res *Response, host string, parsedURL *url.URL, clientC
 		}
 	} else {
 		// Use proxy
-		proxyConn, err := c.Proxy(&net.Dialer{Timeout: c.ConnectTimeout})
+		proxyConn, err := c.Proxy(&net.Dialer{Timeout: c.ConnectTimeout}, host)
 		if err != nil {
 			return nil, err
 		}
