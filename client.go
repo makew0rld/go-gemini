@@ -75,6 +75,9 @@ type header struct {
 	meta   string
 }
 
+// ProxyFunc. See Client documentation
+type ProxyFunc func(dialer *net.Dialer, address string) (net.Conn, error)
+
 type Client struct {
 	// NoTimeCheck allows connections with expired or future certs if set to true.
 	NoTimeCheck bool
@@ -124,7 +127,10 @@ type Client struct {
 	//
 	// This is not "gemini proxying", aka the proxying functionality built in to
 	// the Gemini protocol. This is for proxying requests over TOR, or SOCKS5, etc.
-	Proxy func(dialer *net.Dialer, address string) (net.Conn, error)
+	//
+	//     func(dialer *net.Dialer, address string) (net.Conn, error)
+	//
+	Proxy ProxyFunc
 }
 
 var DefaultClient = &Client{ConnectTimeout: 15 * time.Second}
