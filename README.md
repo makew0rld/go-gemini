@@ -6,11 +6,15 @@ go-gemini is a library that provides an easy interface to create client ~~and se
 
 **Spec version supported:** v0.16.0, November 14th 2021
 
-This version of the library was forked from [~yotam/go-gemini](https://git.sr.ht/~yotam/go-gemini/) to add additional features, as well as update it to support newer specs. At the time of forking, it had not seen any new commit for 5 months, and was based on v0.9.2. If there are any future upstream updates, I will make an effort to include them.
+This version of the library was forked from [~yotam/go-gemini](https://git.sr.ht/~yotam/go-gemini/) to add additional features, as well as update it to support newer specs. At the time of forking, it had not seen any new commit for 5 months, and was based on v0.9.2. 
 
 **The server part of this library has been removed.** I don't use it and don't want to maintain it.
 
 This is mostly a personal library. You might want to check out [go-gemini](https://sr.ht/~adnano/go-gemini) (no relation) for more features.
+
+## Project Status
+
+go-gemini is in maintenance mode. Bug and spec fixes only. See my [blog post](https://www.makeworld.space/2023/08/bye_gemini.html) for details.
 
 ## Improvements
 This fork of the library improves on the original in several ways, some listed above already.
