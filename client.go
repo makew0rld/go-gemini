@@ -418,7 +418,7 @@ func getHeader(conn io.Reader) (header, error) {
 	}
 
 	fields := strings.Fields(string(line))
-	if len(fields) < 2 && line[len(line)-1] != ' ' {
+	if len(fields) == 0 || (len(fields) < 2 && line[len(line)-1] != ' ') {
 		return header{}, fmt.Errorf("header not formatted correctly")
 	}
 
