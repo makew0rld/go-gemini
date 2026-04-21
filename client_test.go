@@ -101,6 +101,20 @@ func TestGetHeaderNoSpace(t *testing.T) {
 	}
 }
 
+func TestGetHeaderOnlyRN(t *testing.T) {
+	_, err := getHeader(strings.NewReader("\r\n"))
+	if err == nil {
+		t.Fatalf("expected to get an error for only \\r\\n header")
+	}
+}
+
+func TestGetHeaderWhitespaceAndRN(t *testing.T) {
+	_, err := getHeader(strings.NewReader(" \r\n"))
+	if err == nil {
+		t.Fatalf("expected to get an error for whitespace + \\r\\n header")
+	}
+}
+
 func parse(s string) *url.URL {
 	p, _ := url.Parse(s)
 	return p
